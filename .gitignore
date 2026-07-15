@@ -1,0 +1,134 @@
+# ======================
+# Unity 自动生成目录
+# ======================
+.utmp/
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+
+# ======================
+# 性能/内存快照（大文件）
+# ======================
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# ======================
+# Blender 备份文件（无需版本控制）
+# ======================
+*.blend1
+
+# ======================
+# 编辑器 / IDE 缓存
+# ======================
+.vs/
+.idea/
+.vscode/
+.consulo/
+ExportedObj/
+.gradle/
+
+# Visual Studio / MonoDevelop / Rider 生成文件
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.DotSettings.user
+
+# ======================
+# 构建产物与安装包
+# ======================
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.ipa
+*.p12
+*.mobileprovision
+*.xcent
+*.keystore
+*.jks
+
+# ======================
+# 崩溃报告 / 日志
+# ======================
+*.log
+sysinfo.txt
+crashlytics-build.properties
+mono_crash.*
+
+# ======================
+# TestRunner 自动生成场景（去重后合并）
+# ======================
+/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# ======================
+# Visual Scripting 自动生成文件
+# ======================
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db.meta
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers
+/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers.meta
+
+# ======================
+# Addressables 缓存与临时文件
+# ======================
+/ServerData
+/[Aa]ssets/StreamingAssets/aa*
+/[Aa]ssets/AddressableAssetsData/link.xml*
+/[Aa]ssets/Addressables_Temp*
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+
+# ======================
+# 操作系统生成文件
+# ======================
+.DS_Store
+._*
+*.DS_Store
+Thumbs.db
+*~
+
+# ======================
+# 项目设置（敏感 / 本地配置）
+# ======================
+[Pp]rojectSettings/PackageManagerSettings.json
+*.private
+*.secret
+config.json
+.env
+
+# ======================
+# 第三方插件冗余（只删除不应提交的 meta，下面用 ! 覆盖）
+# ======================
+[Aa]ssetStoreTools*
+*/[Aa]ssets/[Aa]ssetStoreTools*
+
+# ----------------------------------------------------------
+# 重要：保留所有 .meta 文件（Unity 必须）
+# 但排除极少数的生成/临时 meta（如 blend1、csproj 等）
+# ----------------------------------------------------------
+!*.meta
+
+# 特殊 meta 忽略（放在 !*.meta 之后，确保覆盖）
+*.blend1.meta
+*.csproj.meta
+*.sln.meta
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+*.unitypackage.meta
+*.userprefs.meta
+*.tmp.meta

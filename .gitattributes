@@ -1,0 +1,109 @@
+# ============================================
+# Git LFS 配置 —— 大型二进制文件
+# 所有匹配项将通过 LFS 存储，避免仓库膨胀
+# ============================================
+
+# --- 自动将文本文件的行尾转换为 LF ---
+* text=auto
+
+# --- 模型 / 3D 资源 ---
+*.fbx filter=lfs diff=lfs merge=lfs -text
+*.obj filter=lfs diff=lfs merge=lfs -text
+*.dae filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.3ds filter=lfs diff=lfs merge=lfs -text
+*.max filter=lfs diff=lfs merge=lfs -text
+*.mb filter=lfs diff=lfs merge=lfs -text
+*.ma filter=lfs diff=lfs merge=lfs -text
+
+# --- 纹理 / 图片 ---
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.psb filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.bmp filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text
+*.iff filter=lfs diff=lfs merge=lfs -text
+*.pict filter=lfs diff=lfs merge=lfs -text
+*.dds filter=lfs diff=lfs merge=lfs -text
+
+# --- 音频 ---
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.aif filter=lfs diff=lfs merge=lfs -text
+*.aiff filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+*.xm filter=lfs diff=lfs merge=lfs -text
+*.mod filter=lfs diff=lfs merge=lfs -text
+*.it filter=lfs diff=lfs merge=lfs -text
+*.s3m filter=lfs diff=lfs merge=lfs -text
+
+# --- 视频 ---
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.ogv filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+
+# --- Unity 特殊资源 ---
+*.unity filter=lfs diff=lfs merge=lfs -text
+*.prefab filter=lfs diff=lfs merge=lfs -text
+*.asset filter=lfs diff=lfs merge=lfs -text
+*.spriteatlas filter=lfs diff=lfs merge=lfs -text
+*.spriteatlasv2 filter=lfs diff=lfs merge=lfs -text
+*.mask filter=lfs diff=lfs merge=lfs -text
+*.renderTexture filter=lfs diff=lfs merge=lfs -text
+*.cubemap filter=lfs diff=lfs merge=lfs -text
+*.flare filter=lfs diff=lfs merge=lfs -text
+*.mixer filter=lfs diff=lfs merge=lfs -text
+*.shadervariants filter=lfs diff=lfs merge=lfs -text
+*.terrainlayer filter=lfs diff=lfs merge=lfs -text
+*.brush filter=lfs diff=lfs merge=lfs -text
+*.fontsettings filter=lfs diff=lfs merge=lfs -text
+*.guiskin filter=lfs diff=lfs merge=lfs -text
+
+# --- 插件 / 编译好的二进制库 ---
+*.dll filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+*.a filter=lfs diff=lfs merge=lfs -text
+*.lib filter=lfs diff=lfs merge=lfs -text
+*.bundle filter=lfs diff=lfs merge=lfs -text
+*.jar filter=lfs diff=lfs merge=lfs -text
+*.aar filter=lfs diff=lfs merge=lfs -text
+
+# --- 构建产物（备份/发布包）---
+*.apk filter=lfs diff=lfs merge=lfs -text
+*.aab filter=lfs diff=lfs merge=lfs -text
+*.unitypackage filter=lfs diff=lfs merge=lfs -text
+*.app filter=lfs diff=lfs merge=lfs -text
+*.ipa filter=lfs diff=lfs merge=lfs -text
+
+# ============================================
+# 文本文件 —— 保留在普通 Git 中（便于 diff/merge）
+# ============================================
+*.cs text diff=csharp
+*.shader text diff=shader
+*.hlsl text
+*.cginc text
+*.compute text
+*.json text
+*.xml text
+*.yaml text
+*.yml text
+*.txt text
+*.md text
+*.meta text diff=unitymeta
+*.asmdef text
+*.asmref text
+*.rsp text
+*.xaml text
+*.html text
+*.css text
+*.js text
+*.booproj text
