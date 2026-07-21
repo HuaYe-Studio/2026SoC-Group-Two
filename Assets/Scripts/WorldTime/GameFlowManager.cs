@@ -8,18 +8,18 @@ public class GameFlowManager : MonoBehaviour
 
     private void Start()
     {
-        if (TimeManager.instance == null)
+        if (TimeManager.Instance == null)
         {
             this.enabled = false;
             return;
         }
         
-        gameEndTime = TimeManager.instance.gameStartTime.AddDays(gameTotalDay);
+        gameEndTime = TimeManager.Instance.GameStartTime.AddDays(gameTotalDay);
 
-        if (TimeManager.instance.currentTime >= gameEndTime)
+        if (TimeManager.Instance.CurrentTime >= gameEndTime)
             return;
         
-        TimeManager.instance.OnHourChanged += CheckGameEnd;
+        TimeManager.Instance.OnHourChanged += CheckGameEnd;
     }
     private void Update()
     {
@@ -31,9 +31,9 @@ public class GameFlowManager : MonoBehaviour
     }
     private void OnDestroy()
     {
-        if (TimeManager.instance != null)
+        if (TimeManager.Instance != null)
         {
-            TimeManager.instance.OnHourChanged -= CheckGameEnd;
+            TimeManager.Instance.OnHourChanged -= CheckGameEnd;
         }
     }
 
@@ -52,7 +52,7 @@ public class GameFlowManager : MonoBehaviour
     {
         if (checkTime >= gameEndTime)
         {
-            TimeManager.instance.OnHourChanged -= CheckGameEnd;
+            TimeManager.Instance.OnHourChanged -= CheckGameEnd;
             OnGameEnd();
         }
     }

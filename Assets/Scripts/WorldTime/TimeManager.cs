@@ -10,15 +10,15 @@ namespace WorldTime
         [SerializeField] private float timeScale = 1f;
 
         [Header("Initial Time Settings")] 
-        public DateTime gameStartTime { get; private set; }
         [SerializeField] private int startYear = 1;
         [SerializeField] private int startMonth = 1;
         [SerializeField] private int startDay = 1;
         [SerializeField] private int startHour = 8;
-        [SerializeField] private int startMinute = 0;
-        private int startSecond = 0;
+        [SerializeField] private int startMinute;
+        public DateTime GameStartTime { get; private set; }
+        private readonly int startSecond = 0;
         
-        public DateTime currentTime { get; private set; }
+        public DateTime CurrentTime { get; private set; }
  
         private int lastDay;
         private int lastHour;
@@ -28,15 +28,15 @@ namespace WorldTime
         public event Action<DateTime> OnHourChanged;
         public event Action<DateTime> OnMinuteChanged;
         
-        public static TimeManager instance;
+        public static TimeManager Instance;
         private void Awake()
         {
-            if (instance != null && instance != this)
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
 
             InitializeTime();
@@ -44,37 +44,37 @@ namespace WorldTime
 
         private void InitializeTime()
         {
-            gameStartTime = new DateTime(startYear, startMonth, startDay, startHour, startMinute, startSecond);
-            currentTime = gameStartTime;
+            GameStartTime = new DateTime(startYear, startMonth, startDay, startHour, startMinute, startSecond);
+            CurrentTime = GameStartTime;
 
-            lastDay = currentTime.Day;
-            lastHour = currentTime.Hour;
-            lastMinute = currentTime.Minute;
+            lastDay = CurrentTime.Day;
+            lastHour = CurrentTime.Hour;
+            lastMinute = CurrentTime.Minute;
         }
 
         private void Update()
         {
             float passedTime = Time.deltaTime * timeMultiplier * timeScale;
             TimeSpan passedTimeSpan = TimeSpan.FromSeconds(passedTime);
-            currentTime = currentTime.Add(passedTimeSpan);
+            CurrentTime = CurrentTime.Add(passedTimeSpan);
 
             CheckTime();
         }
 
         private void CheckTime()
         {
-            if (currentTime.Minute != lastMinute)
+            if (CurrentTime.Minute != lastMinute)
             {
-                lastMinute = currentTime.Minute;
-                OnMinuteChanged?.Invoke(currentTime);
-                if (currentTime.Hour != lastHour)
+                lastMinute = CurrentTime.Minute;
+                OnMinuteChanged?.Invoke(CurrentTime);
+                if (CurrentTime.Hour != lastHour)
                 {
-                    lastHour = currentTime.Hour;
-                    OnHourChanged?.Invoke(currentTime);
-                    if (currentTime.Day != lastDay)
+                    lastHour = CurrentTime.Hour;
+                    OnHourChanged?.Invoke(CurrentTime);
+                    if (CurrentTime.Day != lastDay)
                     {
-                        lastDay = currentTime.Day;
-                        OnDayChanged?.Invoke(currentTime);
+                        lastDay = CurrentTime.Day;
+                        OnDayChanged?.Invoke(CurrentTime);
                     }
                 }
             }
