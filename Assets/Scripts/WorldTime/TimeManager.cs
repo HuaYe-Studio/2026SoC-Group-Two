@@ -28,7 +28,7 @@ namespace WorldTime
         public event Action<DateTime> OnHourChanged;
         public event Action<DateTime> OnMinuteChanged;
         
-        public static TimeManager Instance;
+        public static TimeManager Instance{ get; private set; }
         private void Awake()
         {
             if (Instance != null && Instance != this)
