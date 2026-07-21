@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
@@ -33,11 +30,6 @@ public class PlayerController : MonoBehaviour
         Move();
     }
 
-    private void FixedUpdate()
-    {
-        
-    }
-
     private void Move()
     {
         //翻转
@@ -49,6 +41,6 @@ public class PlayerController : MonoBehaviour
         transform.localScale = new Vector3(faceDir, 1, 1);
         //移动
         Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y);
-        controller.Move(movement * moveSpeed * Time.deltaTime);
+        controller.Move(movement * (moveSpeed * Time.deltaTime));
     }
 }
