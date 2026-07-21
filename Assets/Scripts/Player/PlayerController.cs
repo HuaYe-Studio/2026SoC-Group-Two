@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     private PlayerInputControl inputControl;
     public Vector2 inputDirection;
     private CharacterController controller;
-    [Header("��������")]
+    [Header("Basic Paraments")]
     public float moveSpeed;
 
     private void Awake()
