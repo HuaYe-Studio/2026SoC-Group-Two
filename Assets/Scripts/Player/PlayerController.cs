@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     private PlayerInputControl inputControl;
     public Vector2 inputDirection;
     private CharacterController controller;
-    [Header("»ù±¾²ÎÊý")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     public float moveSpeed;
 
     private void Awake()
@@ -40,14 +40,14 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        //·­×ª
+        //ç¿»è½¬
         int faceDir = (int)transform.localScale.x;
         if(inputDirection.x>0.1)
             faceDir=1;
         if(inputDirection.x<-0.1)
             faceDir=-1;
         transform.localScale = new Vector3(faceDir, 1, 1);
-        //ÒÆ¶¯
+        //ç§»åŠ¨
         Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y);
         controller.Move(movement * moveSpeed * Time.deltaTime);
     }
