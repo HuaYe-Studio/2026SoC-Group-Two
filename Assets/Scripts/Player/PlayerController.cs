@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     private PlayerInputControl inputControl;
     public Vector2 inputDirection;
     private Rigidbody rb;
-    [Header("基本参数")]
+    [Header("鍩烘湰鍙傛暟")]
     public float moveSpeed;
 
     private void Awake()
@@ -39,14 +39,14 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        //翻转
+        //缈昏浆
         int faceDir = (int)transform.localScale.x;
         if(inputDirection.x>0)
             faceDir=1;
         if(inputDirection.x<0)
             faceDir=-1;
         transform.localScale = new Vector3(faceDir, 1, 1);
-        //移动
+        //绉诲姩
         Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y);
         rb.MovePosition(rb.position + movement * Time.fixedDeltaTime*moveSpeed);
     }
