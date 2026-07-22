@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Unity.VisualScripting;
+using UnityEngine.InputSystem;
+using System.Linq;
 
 public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -12,6 +14,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     [Header("父级物体")]
     public GameObject parentItem;
     private RectTransform parentRect;
+    private ItemMeshCreator itemMeshCreator;
     [Header("物体图片")]
     public Image itemImage;
     [Header("检测范围")]
@@ -25,6 +28,8 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     [Header("背包网格颜色切换")]
     public Color originalColor;
     public Color selectedColor;
+    [Header("物体网格旋转控制按钮")]
+    public KeyCode rotate_KeyCode;
 
     #region 私有成员
     GameObject[] targetMeshes;
@@ -39,8 +44,14 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
         backpackMeshes = GameObject.FindGameObjectsWithTag("backpackmesh");
         // 获取本身物体网格脚本
         itemMeshes = parentItem.GetComponentsInChildren<ItemMesh>();
+        itemMeshCreator = parentItem.GetComponent<ItemMeshCreator>();
 
         parentRect = parentItem.GetComponent<RectTransform>();
+    }
+
+    void Update()
+    {
+        ItemMeshRotate();
     }
 
     #region 检测是否靠近背包网格
@@ -187,6 +198,30 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
         foreach (GameObject backpackMesh in meshes)
         {
             backpackMesh.GetComponent<Image>().color = targetColor;
+        }
+    }
+    #endregion
+
+    #region 物体网格旋转
+    void ItemMeshRotate()
+    {
+        if (Input.GetKeyDown(rotate_KeyCode))
+        {
+            // 保持拖拽位置
+            parentItem.GetComponent<RectTransform>().position = Input.mousePosition;
+
+            if (itemMeshes == null || itemMeshes.Length == 0) return;
+
+            // 旋转父对象
+            RectTransform parentRectTransform = parentItem.GetComponent<RectTransform>();
+            parentRectTransform.localEulerAngles += new Vector3(0f, 0f, -90f);
+
+            // 重新计算每个网格的逻辑坐标
+            foreach (ItemMesh itemMesh in itemMeshes)
+            {
+                Vector2 oldPos = itemMesh.itemMeshPos;
+                itemMesh.itemMeshPos = new Vector2(oldPos.y, -oldPos.x); // 顺时针 90 度
+            }
         }
     }
     #endregion
