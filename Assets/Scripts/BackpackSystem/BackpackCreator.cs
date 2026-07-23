@@ -36,8 +36,10 @@ public class BackpackCreator : MonoBehaviour
         {
             for (int j = 0 ; j < columnNumber ; j++)
             {
-                GameObject newBackpackMesh = Instantiate(singleMeshPrefab , backpackMeshPivotObj.transform.position + new Vector3(j * meshWidth , -(i * meshHeight) , 0f) , 
-                singleMeshPrefab.transform.rotation , backpackMeshPivotObj.transform);
+                GameObject newBackpackMesh = Instantiate(singleMeshPrefab, backpackMeshPivotObj.transform);
+                RectTransform newMeshRect = newBackpackMesh.GetComponent<RectTransform>();
+                newMeshRect.anchoredPosition = new Vector2(j * meshWidth, -i * meshHeight);
+                newMeshRect.localScale = Vector3.one;
 
                 BackpackMesh backpackMeshScript = newBackpackMesh.GetComponent<BackpackMesh>() ?? newBackpackMesh.AddComponent<BackpackMesh>();
                 backpackMeshScript.meshPos.x = j;
@@ -73,8 +75,11 @@ public class BackpackCreator : MonoBehaviour
     #region 拓展网格
     public void ExpandBackpackMesh(Vector2 newMeshPos , Vector2 expandDirection , GameObject pivotMesh)
     {
-        GameObject newBackpackMesh = Instantiate(singleMeshPrefab , pivotMesh.transform.position + new Vector3(expandDirection.x * meshWidth , expandDirection.y * meshHeight , 0f) , 
-        singleMeshPrefab.transform.rotation , backpackMeshPivotObj.transform);
+        GameObject newBackpackMesh = Instantiate(singleMeshPrefab, backpackMeshPivotObj.transform);
+        RectTransform newMeshRect = newBackpackMesh.GetComponent<RectTransform>();
+        RectTransform pivotRect = pivotMesh.GetComponent<RectTransform>();
+        newMeshRect.anchoredPosition = pivotRect.anchoredPosition + new Vector2(expandDirection.x * meshWidth, expandDirection.y * meshHeight);
+        newMeshRect.localScale = Vector3.one;
 
         BackpackMesh backpackMeshScript = newBackpackMesh.GetComponent<BackpackMesh>() ?? newBackpackMesh.AddComponent<BackpackMesh>();
 

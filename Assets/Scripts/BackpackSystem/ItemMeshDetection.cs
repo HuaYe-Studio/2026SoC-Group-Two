@@ -36,6 +36,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     BackpackMesh backpackMesh_S;
     GameObject pivotBackpackMesh;
     List<GameObject> readyMeshes = new List<GameObject>();  // 记录准备放入的网格
+    bool isDragging = false;
     #endregion
 
     void Start()
@@ -51,7 +52,10 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     void Update()
     {
-        ItemMeshRotate();
+        if (isDragging)
+        {
+            ItemMeshRotate();
+        }
     }
 
     #region 检测是否靠近背包网格
@@ -60,6 +64,9 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
         // 恢复颜色
         if (readyMeshes.Count > 0) ChangeBackpackMeshColor(originalColor , readyMeshes.ToArray());
         readyMeshes.Clear();
+        targetMeshes = null;
+        backpackMesh_S = null;
+        pivotBackpackMesh = null;
 
         foreach (GameObject backpackMesh in backpackMeshes)
         {
@@ -71,20 +78,16 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
                 {
                     // 获取此背包中的网格
                     GameObject[] thisPackMeshes = backpackMesh.transform.parent.gameObject.GetComponent<BackpackCreator>().backpackMeshes.ToArray();
-                    if (isSpaceEnough(backpackMeshScript , thisPackMeshes))  // 此时readyMeshes被赋值
+                    if (isSpaceEnough(backpackMeshScript , thisPackMeshes , out List<GameObject> matchedMeshes))
                     {
-                        targetMeshes = thisPackMeshes;
+                        targetMeshes = matchedMeshes.ToArray();
+                        readyMeshes = matchedMeshes;
                         backpackMesh_S = backpackMeshScript;
                         pivotBackpackMesh = backpackMesh;
 
                         ChangeBackpackMeshColor(selectedColor , readyMeshes.ToArray());
+                        break;
                     }
-                }
-                else
-                {
-                    // 恢复颜色
-                    if (readyMeshes.Count > 0) ChangeBackpackMeshColor(originalColor , readyMeshes.ToArray());
-                    readyMeshes.Clear();
                 }
             }
         }
@@ -92,9 +95,9 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     #endregion
 
     #region 检测是否能放下整个物体
-    bool isSpaceEnough(BackpackMesh backpackMeshScript , GameObject[] thisPackMeshes)
+    bool isSpaceEnough(BackpackMesh backpackMeshScript , GameObject[] thisPackMeshes , out List<GameObject> matchedMeshes)
     {
-        // 将锚点物体网格坐标“平移”到范围内背包网格坐标 - (注意：锚点处物体网格坐标为（0，0）)
+        matchedMeshes = new List<GameObject>();
         Vector2 offset = new Vector2(backpackMeshScript.meshPos.x - Vector2.zero.x , backpackMeshScript.meshPos.y - Vector2.zero.y);
 
         foreach (ItemMesh itemMesh in itemMeshes)
@@ -102,18 +105,24 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
             bool find_Pos_FitMesh = false;
             foreach (GameObject packMesh in thisPackMeshes)
             {
-                // 能找到对应位置网格
                 if (itemMesh.itemMeshPos + offset == packMesh.GetComponent<BackpackMesh>().meshPos)
                 {
                     find_Pos_FitMesh = true;
-                    if (packMesh.GetComponent<BackpackMesh>().isMeshUsed) return false;
+                    if (packMesh.GetComponent<BackpackMesh>().isMeshUsed)
+                    {
+                        matchedMeshes.Clear();
+                        return false;
+                    }
 
-                    // 将网格添加入readyMeshes中
-                    readyMeshes.Add(packMesh);
+                    matchedMeshes.Add(packMesh);
+                    break;
                 }
             }
-            // 找不到对应位置网格
-            if (!find_Pos_FitMesh) return false;
+            if (!find_Pos_FitMesh)
+            {
+                matchedMeshes.Clear();
+                return false;
+            }
         }
 
         return true;
@@ -121,15 +130,15 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     #endregion
 
     #region 物体放入背包网格
-    void PutInBackpack(GameObject backpackMesh , GameObject[] backpackMeshes)
+    void PutInBackpack(GameObject backpackMesh , GameObject[] selectedMeshes)
     {
         parentItem.transform.position = backpackMesh.transform.position;
-        foreach (GameObject mesh in backpackMeshes)
+        foreach (GameObject mesh in selectedMeshes)
         {
             mesh.GetComponent<BackpackMesh>().isMeshUsed = true;
         }
 
-        usingBackpackMeshes = backpackMeshes;
+        usingBackpackMeshes = selectedMeshes;
     }
     #endregion
 
@@ -137,6 +146,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     #region 物体拖动
     public void OnBeginDrag(PointerEventData eventData)
     {
+        isDragging = true;
         if (usingBackpackMeshes != null)
         {
             foreach (GameObject backpackMesh in usingBackpackMeshes)
@@ -173,11 +183,13 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        isDragging = false;
+
         if (backpackMesh_S != null && targetMeshes != null && pivotBackpackMesh != null)
         {
-            if (isSpaceEnough(backpackMesh_S , targetMeshes))
+            if (isSpaceEnough(backpackMesh_S , pivotBackpackMesh.transform.parent.gameObject.GetComponent<BackpackCreator>().backpackMeshes.ToArray() , out List<GameObject> matchedMeshes))
             {
-                PutInBackpack(pivotBackpackMesh , targetMeshes);
+                PutInBackpack(pivotBackpackMesh , matchedMeshes.ToArray());
             }
         }
 
@@ -212,7 +224,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
             if (itemMeshes == null || itemMeshes.Length == 0) return;
 
-            // 旋转父对象
+            // 直接旋转父对象
             RectTransform parentRectTransform = parentItem.GetComponent<RectTransform>();
             parentRectTransform.localEulerAngles += new Vector3(0f, 0f, -90f);
 
@@ -220,7 +232,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
             foreach (ItemMesh itemMesh in itemMeshes)
             {
                 Vector2 oldPos = itemMesh.itemMeshPos;
-                itemMesh.itemMeshPos = new Vector2(oldPos.y, -oldPos.x); // 顺时针 90 度
+                itemMesh.itemMeshPos = new Vector2(oldPos.y, -oldPos.x); // 每按下一次 R ，顺时针转 90 度
             }
         }
     }

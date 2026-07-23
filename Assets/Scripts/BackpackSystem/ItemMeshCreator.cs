@@ -63,8 +63,10 @@ public class ItemMeshCreator : MonoBehaviour
         {
             for (int j = 0 ; j < meshNumber_Ver ; j++)
             {
-                GameObject newItemMesh = Instantiate(itemMeshPrefab , transform.position + new Vector3 (i * itemMeshWidth , -j * itemMeshHeight , 0f) , 
-                itemMeshPrefab.transform.rotation , transform);
+                GameObject newItemMesh = Instantiate(itemMeshPrefab, transform);
+                RectTransform newMeshRect = newItemMesh.GetComponent<RectTransform>();
+                newMeshRect.anchoredPosition = new Vector2(i * itemMeshWidth, -j * itemMeshHeight);
+                newMeshRect.localScale = Vector3.one;
 
                 ItemMesh itemMeshScript = newItemMesh.GetComponent<ItemMesh>() ?? newItemMesh.AddComponent<ItemMesh>();
 
@@ -147,8 +149,10 @@ public class ItemMeshCreator : MonoBehaviour
             }
         }
 
-        GameObject newItemMesh = Instantiate(itemMeshPrefab , transform.position , 
-        itemMeshPrefab.transform.rotation , transform);
+        GameObject newItemMesh = Instantiate(itemMeshPrefab, transform);
+        RectTransform newMeshRect = newItemMesh.GetComponent<RectTransform>();
+        newMeshRect.anchoredPosition = Vector2.zero;
+        newMeshRect.localScale = Vector3.one;
 
         ItemMesh itemMeshScript = newItemMesh.GetComponent<ItemMesh>() ?? newItemMesh.AddComponent<ItemMesh>();
 
