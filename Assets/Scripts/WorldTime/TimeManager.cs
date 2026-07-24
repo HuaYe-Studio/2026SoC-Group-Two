@@ -5,13 +5,13 @@ namespace WorldTime
 {
     public class TimeManager : MonoBehaviour
     {
-        [Header("Time Flow Settings")] [Tooltip("时间流速")] [SerializeField]
-        private float timeMultiplier = 60f;
+        [Header("Time Flow Settings")] 
+        [Tooltip("时间流速")] [SerializeField] private float timeMultiplier = 60f;
 
         [SerializeField] private float timeScale = 1f;
 
-        [Header("Initial Time Settings")] [SerializeField]
-        private int startYear = 1;
+        [Header("Initial Time Settings")] 
+        [SerializeField] private int startYear = 1;
 
         [SerializeField] private int startMonth = 1;
         [SerializeField] private int startDay = 1;
