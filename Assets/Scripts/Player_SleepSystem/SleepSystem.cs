@@ -119,6 +119,7 @@ public class SleepSystem : MonoBehaviour
 
         else if (TimeManager.Instance.CurrentTime.Hour >= 0 && TimeManager.Instance.CurrentTime.Hour <= 2)
         {
+            // 等待
             // TimeManager.Instance.SetNewTime(6 , 0);
         }
     }
