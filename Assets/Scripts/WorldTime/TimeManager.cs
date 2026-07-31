@@ -42,11 +42,9 @@ namespace WorldTime
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            InitializeTime();
         }
 
-        private void InitializeTime()
+        public void InitializeTime()
         {
             GameStartTime = new DateTime(startYear, startMonth, startDay, startHour, startMinute, startSecond);
             CurrentTime = GameStartTime;
@@ -56,8 +54,19 @@ namespace WorldTime
             lastMinute = CurrentTime.Minute;
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         private void Update()
         {
+            if (!GameFlowManager.Instance.isPlaying)
+                return;
+            
             float passedTime = Time.deltaTime * timeMultiplier * timeScale;
             TimeSpan passedTimeSpan = TimeSpan.FromSeconds(passedTime);
             CurrentTime = CurrentTime.Add(passedTimeSpan);
