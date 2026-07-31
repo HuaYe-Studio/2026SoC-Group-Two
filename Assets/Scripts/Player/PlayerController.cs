@@ -7,6 +7,8 @@ public class PlayerController : MonoBehaviour
     private CharacterController controller;
     [Header("Basic Paraments")]
     public float moveSpeed;
+    public float gravity=-9.8f;
+    public Vector3 velocity;
 
     private void Awake()
     {
@@ -32,15 +34,16 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        //翻转
-        int faceDir = (int)transform.localScale.x;
-        if(inputDirection.x>0.1)
-            faceDir=1;
-        if(inputDirection.x<-0.1)
-            faceDir=-1;
-        transform.localScale = new Vector3(faceDir, 1, 1);
         //移动
-        Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y);
+        Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y).normalized;
         controller.Move(movement * (moveSpeed * Time.deltaTime));
+        //重力
+        if (controller.isGrounded&&velocity.y<0)
+        {
+            velocity.y = -0.2f;
+        }
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+       
     }
 }
