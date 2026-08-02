@@ -42,7 +42,10 @@ namespace Status
 
         private void OnDestroy()
         {
-            TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
+            if (TimeManager.Instance != null)
+            {
+                TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
+            }
             
             if(Instance == this)
             {

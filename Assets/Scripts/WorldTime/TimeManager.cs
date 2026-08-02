@@ -41,7 +41,6 @@ namespace WorldTime
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
         }
 
         public void InitializeTime()
