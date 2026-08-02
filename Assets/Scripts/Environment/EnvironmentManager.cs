@@ -24,19 +24,21 @@ namespace Environment
             }
 
             Instance = this;
-
-            foreach (SkySettingsSO settings in skySettings)
-            {
-                skySettingsMap[settings.weatherType] = settings;
-            }
         }
 
         public void InitializeWeather()
         {
-            ChangerWeather(WeatherType.Day_Sunny);
+            skySettingsMap.Clear();
+            
+            foreach (SkySettingsSO settings in skySettings)
+            {
+                skySettingsMap.TryAdd(settings.weatherType, settings);
+            }
+            
+            ChangeWeather(WeatherType.Day_Sunny);
         }
 
-        public void ChangerWeather(WeatherType weatherType)
+        public void ChangeWeather(WeatherType weatherType)
         {
             if (!skySettingsMap.TryGetValue(weatherType, out SkySettingsSO newSettings))
                 return;
