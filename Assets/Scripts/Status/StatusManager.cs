@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Video;
 using WorldTime;
 
 namespace Status
@@ -63,10 +64,10 @@ namespace Status
             
             foreach (var config in statusSettings.InitialStatusConfigs)
             {
-                statusLastUpdateMap[config.statusType] = TimeManager.Instance.CurrentTime;
+                statusLastUpdateMap.TryAdd(config.statusType, TimeManager.Instance.CurrentTime);
                 
                 var newModule =new StatusModule(config.statusType,config.defaultValue,config.defaultMax,config.defaultMin);
-                statusMap[config.statusType] = newModule;
+                statusMap.TryAdd(config.statusType, newModule);
             }
         }
 
