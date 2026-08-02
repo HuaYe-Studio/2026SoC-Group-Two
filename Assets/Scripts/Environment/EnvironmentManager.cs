@@ -67,6 +67,8 @@ namespace Environment
             RenderSettings.fog = settings.enableFog;
             RenderSettings.fogColor = settings.fogColor;
             RenderSettings.fogDensity = settings.fogDensity;
+            
+            DynamicGI.UpdateEnvironment();
         }
     }
 }
