@@ -25,9 +25,6 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     public ItemMesh[] itemMeshes;
     [Header("物体放置的背包网格")]
     public GameObject[] usingBackpackMeshes;
-    [Header("背包网格颜色切换")]
-    public Color originalColor;
-    public Color selectedColor;
     [Header("物体网格旋转控制按钮")]
     public KeyCode rotate_KeyCode;
 
@@ -36,6 +33,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     BackpackMesh backpackMesh_S;
     GameObject pivotBackpackMesh;
     List<GameObject> readyMeshes = new List<GameObject>();  // 记录准备放入的网格
+    BackpackCreator backpackCreator; // 背包网格父级
     bool isDragging = false;
     #endregion
 
@@ -62,7 +60,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     void DetectBackpackMesh()
     {
         // 恢复颜色
-        if (readyMeshes.Count > 0) ChangeBackpackMeshColor(originalColor , readyMeshes.ToArray());
+        if (readyMeshes.Count > 0) ChangeBackpackMeshColor(backpackCreator.originMeshColor , readyMeshes.ToArray());
         readyMeshes.Clear();
         targetMeshes = null;
         backpackMesh_S = null;
@@ -77,7 +75,8 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
                 if (!backpackMeshScript.isMeshUsed)
                 {
                     // 获取此背包中的网格
-                    GameObject[] thisPackMeshes = backpackMesh.transform.parent.gameObject.GetComponent<BackpackCreator>().backpackMeshes.ToArray();
+                    backpackCreator = backpackMesh.transform.parent.gameObject.GetComponent<BackpackCreator>();
+                    GameObject[] thisPackMeshes = backpackCreator.backpackMeshes.ToArray();
                     if (isSpaceEnough(backpackMeshScript , thisPackMeshes , out List<GameObject> matchedMeshes))
                     {
                         targetMeshes = matchedMeshes.ToArray();
@@ -85,7 +84,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
                         backpackMesh_S = backpackMeshScript;
                         pivotBackpackMesh = backpackMesh;
 
-                        ChangeBackpackMeshColor(selectedColor , readyMeshes.ToArray());
+                        ChangeBackpackMeshColor(backpackCreator.hightlightMeshColor , readyMeshes.ToArray());
                         break;
                     }
                 }
@@ -153,7 +152,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
             {
                 backpackMesh.GetComponent<BackpackMesh>().isMeshUsed = false;
             }
-            ChangeBackpackMeshColor(originalColor , usingBackpackMeshes);
+            if (backpackCreator != null) ChangeBackpackMeshColor(backpackCreator.originMeshColor , usingBackpackMeshes);
             usingBackpackMeshes = null;
         }
     }
@@ -187,7 +186,8 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
 
         if (backpackMesh_S != null && targetMeshes != null && pivotBackpackMesh != null)
         {
-            if (isSpaceEnough(backpackMesh_S , pivotBackpackMesh.transform.parent.gameObject.GetComponent<BackpackCreator>().backpackMeshes.ToArray() , out List<GameObject> matchedMeshes))
+            // backpackCreator = pivotBackpackMesh.transform.parent.GetComponent<BackpackCreator>();
+            if (isSpaceEnough(backpackMesh_S , backpackCreator.backpackMeshes.ToArray() , out List<GameObject> matchedMeshes))
             {
                 PutInBackpack(pivotBackpackMesh , matchedMeshes.ToArray());
             }
@@ -199,7 +199,7 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
         pivotBackpackMesh = null;
 
         // 恢复颜色
-        if (readyMeshes.Count > 0) ChangeBackpackMeshColor(originalColor , readyMeshes.ToArray());
+        if (readyMeshes.Count > 0) ChangeBackpackMeshColor(backpackCreator.originMeshColor , readyMeshes.ToArray());
         readyMeshes.Clear();
     }
     #endregion

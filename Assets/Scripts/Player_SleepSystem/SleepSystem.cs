@@ -114,13 +114,12 @@ public class SleepSystem : MonoBehaviour
     {
         if (TimeManager.Instance.CurrentTime.Hour >= 6)
         {
-            // TimeManager.Instance.SetNewTIme(CurrentTime.Day + 1 , 6 , 0);
+            TimeManager.Instance.SetNewTIme(CurrentTime.Day + 1 , 6 , 0);
         }
 
         else if (TimeManager.Instance.CurrentTime.Hour >= 0 && TimeManager.Instance.CurrentTime.Hour <= 2)
         {
-            // 等待
-            // TimeManager.Instance.SetNewTime(6 , 0);
+            TimeManager.Instance.SetNewTime(6 , 0);
         }
     }
     #endregion

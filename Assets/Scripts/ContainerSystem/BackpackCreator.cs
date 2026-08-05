@@ -24,6 +24,10 @@ public class BackpackCreator : MonoBehaviour
     [Header("网格列表")]
     public List<GameObject> backpackMeshes = new List<GameObject>();
 
+    [Header("背包网格样式")]
+    public Color originMeshColor;
+    public Color hightlightMeshColor;
+
 
     [ContextMenu("生成背包网格")]
     public void CreateBackpackMesh()
