@@ -3,6 +3,7 @@ using System;
 using WorldTime;
 using Scene;
 using Status;
+using Environment;
 
 public class GameFlowManager : MonoBehaviour
 {
@@ -25,7 +26,7 @@ public class GameFlowManager : MonoBehaviour
     
     private void Update()
     {
-        //待inputsystem替换，不确定是否为空格先用着
+        //待inputsystem替换，先用着
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             QuitGame();
@@ -59,7 +60,7 @@ public class GameFlowManager : MonoBehaviour
     //之后挂在mainmenu的按钮上即可
     private void InitializeGame()
     {
-        if (TimeManager.Instance == null|| StatusManager.Instance == null)
+        if (TimeManager.Instance == null|| StatusManager.Instance == null || EnvironmentManager.Instance == null)
         {
             this.enabled = false;
             return;
@@ -67,6 +68,7 @@ public class GameFlowManager : MonoBehaviour
         
         TimeManager.Instance.InitializeTime();
         StatusManager.Instance.InitializeStatusFromConfig();
+        EnvironmentManager.Instance.InitializeWeather();
         
         gameEndTime = TimeManager.Instance.GameStartTime.AddDays(gameTotalDay);
 
