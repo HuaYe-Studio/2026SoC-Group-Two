@@ -17,12 +17,16 @@ public class Hygiene_UI : MonoBehaviour
 
     void Start()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         maxHygieneValue = StatusManager.Instance.GetStatusModule(StatusType.Hygiene).MaxValue;
         minHygieneValue = StatusManager.Instance.GetStatusModule(StatusType.Hygiene).MinValue;
     }
 
     void Update()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         currentHygieneValue = StatusManager.Instance.GetStatusModule(StatusType.Hygiene).CurrentValue;
         ChangeIconStyle(currentHygieneValue);
     }

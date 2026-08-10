@@ -114,7 +114,7 @@ public class SleepSystem : MonoBehaviour
     {
         if (TimeManager.Instance.CurrentTime.Hour >= 6)
         {
-            TimeManager.Instance.SetNewTIme(CurrentTime.Day + 1 , 6 , 0);
+            TimeManager.Instance.SetNewTime(TimeManager.Instance.CurrentTime.Day + 1 , 6 , 0);
         }
 
         else if (TimeManager.Instance.CurrentTime.Hour >= 0 && TimeManager.Instance.CurrentTime.Hour <= 2)
@@ -132,7 +132,7 @@ public class SleepSystem : MonoBehaviour
         SetTime();
         getUpEvent.Invoke(); // 启用起床事件
     }
-    public void BeginSleeping() // 开始睡觉
+    void BeginSleeping() // 开始睡觉
     {
         StartCoroutine(PlayerSleeping());
     }
@@ -144,9 +144,21 @@ public class SleepSystem : MonoBehaviour
         SetTime();
         wakeEvent.Invoke(); // 启用苏醒事件
     }
-    public void BeginFainting() // 开始昏迷
+    void BeginFainting() // 开始昏迷
     {
         StartCoroutine(PlayerFainting());
+    }
+    #endregion
+
+
+    #region 调试用方法
+    public void ShowCurrentTime()
+    {
+        Debug.Log($"当前时间：{TimeManager.Instance.CurrentTime}");
+    }
+    public void ShowRecoverValue()
+    {
+        Debug.Log($"设定体力恢复值：{playerStrength_recover}");
     }
     #endregion
 }

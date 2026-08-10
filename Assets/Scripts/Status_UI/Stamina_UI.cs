@@ -17,12 +17,16 @@ public class Stamina_UI : MonoBehaviour
 
     void Start()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         maxStaminaValue = StatusManager.Instance.GetStatusModule(StatusType.Stamina).MaxValue;
         minStaminaValue = StatusManager.Instance.GetStatusModule(StatusType.Stamina).MinValue;
     }
 
     void Update()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         currentStaminaValue = StatusManager.Instance.GetStatusModule(StatusType.Stamina).CurrentValue;
         ChangeIconStyle(currentStaminaValue);
     }
