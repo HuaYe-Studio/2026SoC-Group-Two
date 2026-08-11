@@ -1,51 +1,99 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using Unity.VisualScripting;
-using UnityEngine.InputSystem;
-using System.Linq;
 
-public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class ItemMeshDetection : MonoBehaviour
 {
-    [Header("画布")]
-    public Canvas canvas;
     [Header("父级物体")]
     public GameObject parentItem;
     private RectTransform parentRect;
-    private ItemMeshCreator itemMeshCreator;
-    [Header("物体图片")]
-    public Image itemImage;
+    private ItemMesh anchorItemMesh;
+    [Header("画布")]
+    public Canvas canvas;
     [Header("检测范围")]
     public float detectDistance;
-    [Header("背包网格检索")]
-    public GameObject[] backpackMeshes;
+    [Header("容器网格检索")]
+    public GameObject[] containerMeshes;
     [Header("物体网格列表")]
     public ItemMesh[] itemMeshes;
-    [Header("物体放置的背包网格")]
-    public GameObject[] usingBackpackMeshes;
+    [Header("物体放置的容器网格")]
+    public GameObject[] usingContainerMeshes;
     [Header("物体网格旋转控制按钮")]
     public KeyCode rotate_KeyCode;
 
     #region 私有成员
     GameObject[] targetMeshes;
-    BackpackMesh backpackMesh_S;
-    GameObject pivotBackpackMesh;
+    ContainerMesh containerMesh_S;
+    GameObject pivotContainerMesh;
     List<GameObject> readyMeshes = new List<GameObject>();  // 记录准备放入的网格
-    BackpackCreator backpackCreator; // 背包网格父级
+    ContainerCreator containerCreator; // 容器网格父级
     bool isDragging = false;
     #endregion
 
+    public Transform AnchorTransform => anchorItemMesh != null ? anchorItemMesh.transform : null;
+
     void Start()
     {
-        // 获取所有背包网格
-        backpackMeshes = GameObject.FindGameObjectsWithTag("backpackmesh");
-        // 获取本身物体网格脚本
-        itemMeshes = parentItem.GetComponentsInChildren<ItemMesh>();
-        itemMeshCreator = parentItem.GetComponent<ItemMeshCreator>();
+        if (parentItem == null)
+        {
+            parentItem = gameObject;
+            Debug.LogWarning("ItemMeshDetection: 未指定 parentItem，已自动设置为当前 GameObject。", gameObject);
+        }
+
+        // 获取所有容器网格
+        containerMeshes = GameObject.FindGameObjectsWithTag("containermesh");
+        if (containerMeshes.Length == 0)
+        {
+            containerMeshes = GameObject.FindGameObjectsWithTag("backpackmesh");
+        }
+        if (containerMeshes.Length == 0)
+        {
+            Debug.LogWarning("ItemMeshDetection: 未找到任何 containermesh 或 backpackmesh 标签的容器网格。", gameObject);
+        }
+
+        RefreshItemMeshData();
 
         parentRect = parentItem.GetComponent<RectTransform>();
+        if (parentRect == null)
+        {
+            Debug.LogWarning("ItemMeshDetection: parentItem 未包含 RectTransform。", parentItem);
+        }
+
+        if (canvas == null)
+        {
+            canvas = GetComponentInParent<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogWarning("ItemMeshDetection: 未指定 Canvas，坐标检测可能不准确。", gameObject);
+            }
+        }
+    }
+
+    void RefreshItemMeshData()
+    {
+        itemMeshes = parentItem.GetComponentsInChildren<ItemMesh>(true);
+        anchorItemMesh = itemMeshes.FirstOrDefault(mesh => mesh.itemMeshPos == Vector2.zero);
+        if (anchorItemMesh == null && itemMeshes.Length > 0)
+        {
+            anchorItemMesh = itemMeshes[0];
+            Debug.LogWarning("ItemMeshDetection: 未找到逻辑坐标为 (0,0) 的锚点网格，已使用第一个网格作为锚点。", gameObject);
+        }
+        if (anchorItemMesh == null)
+        {
+            Debug.LogError("ItemMeshDetection: 未找到任何 ItemMesh。", gameObject);
+        }
+
+        ItemPivot itemPivot = GetComponent<ItemPivot>();
+        if (itemPivot != null)
+        {
+            itemPivot.itemMeshPositions.Clear();
+            foreach (ItemMesh itemMesh in itemMeshes)
+            {
+                itemPivot.itemMeshPositions.Add(itemMesh.itemMeshPos);
+            }
+        }
     }
 
     void Update()
@@ -53,61 +101,143 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
         if (isDragging)
         {
             ItemMeshRotate();
+            DetectContainerMesh();
         }
     }
 
-    #region 检测是否靠近背包网格
-    void DetectBackpackMesh()
+    #region 拖拽状态管理
+    public void OnBeginDrag()
     {
-        // 恢复颜色
-        if (readyMeshes.Count > 0) ChangeBackpackMeshColor(backpackCreator.originMeshColor , readyMeshes.ToArray());
+        isDragging = true;
+        RefreshItemMeshData();
+        if (usingContainerMeshes != null)
+        {
+            foreach (GameObject containerMesh in usingContainerMeshes)
+            {
+                containerMesh.GetComponent<ContainerMesh>().isMeshUsed = false;
+            }
+            if (containerCreator != null) ChangeContainerMeshColor(containerCreator.originMeshColor, usingContainerMeshes);
+            usingContainerMeshes = null;
+        }
+    }
+
+    public void OnDrag()
+    {
+        DetectContainerMesh();
+    }
+
+    public void OnEndDrag()
+    {
+        isDragging = false;
+
+        if (containerMesh_S != null && targetMeshes != null && pivotContainerMesh != null)
+        {
+            if (isSpaceEnough(containerMesh_S, containerCreator.containerMeshes.ToArray(), out List<GameObject> matchedMeshes))
+            {
+                PutInContainer(pivotContainerMesh, matchedMeshes.ToArray());
+            }
+        }
+
+        containerMesh_S = null;
+        targetMeshes = null;
+        pivotContainerMesh = null;
+
+        if (readyMeshes.Count > 0 && containerCreator != null) ChangeContainerMeshColor(containerCreator.originMeshColor, readyMeshes.ToArray());
+        readyMeshes.Clear();
+    }
+    #endregion
+
+    #region 检测是否靠近容器网格
+    public void DetectContainerMesh()
+    {
+        if (readyMeshes.Count > 0 && containerCreator != null)
+        {
+            ChangeContainerMeshColor(containerCreator.originMeshColor, readyMeshes.ToArray());
+        }
+
         readyMeshes.Clear();
         targetMeshes = null;
-        backpackMesh_S = null;
-        pivotBackpackMesh = null;
+        containerMesh_S = null;
+        pivotContainerMesh = null;
 
-        foreach (GameObject backpackMesh in backpackMeshes)
+        if (anchorItemMesh == null)
         {
-            if (Vector3.Distance(parentItem.transform.position , backpackMesh.transform.position) < detectDistance)
-            {
-                BackpackMesh backpackMeshScript = backpackMesh.GetComponent<BackpackMesh>();
+            Debug.LogWarning("ItemMeshDetection: 无锚点，检测中止。", gameObject);
+            return;
+        }
 
-                if (!backpackMeshScript.isMeshUsed)
+        foreach (GameObject containerMesh in containerMeshes)
+        {
+            bool within = IsWithinDetectDistance(anchorItemMesh.transform, containerMesh.transform);
+            if (within)
+            {
+                ContainerMesh containerMeshScript = containerMesh.GetComponent<ContainerMesh>();
+
+                if (!containerMeshScript.isMeshUsed)
                 {
-                    // 获取此背包中的网格
-                    backpackCreator = backpackMesh.transform.parent.gameObject.GetComponent<BackpackCreator>();
-                    GameObject[] thisPackMeshes = backpackCreator.backpackMeshes.ToArray();
-                    if (isSpaceEnough(backpackMeshScript , thisPackMeshes , out List<GameObject> matchedMeshes))
+                    containerCreator = containerMesh.transform.parent.gameObject.GetComponent<ContainerCreator>();
+                    GameObject[] thisPackMeshes = containerCreator.containerMeshes.ToArray();
+                    if (isSpaceEnough(containerMeshScript, thisPackMeshes, out List<GameObject> matchedMeshes))
                     {
                         targetMeshes = matchedMeshes.ToArray();
                         readyMeshes = matchedMeshes;
-                        backpackMesh_S = backpackMeshScript;
-                        pivotBackpackMesh = backpackMesh;
+                        containerMesh_S = containerMeshScript;
+                        pivotContainerMesh = containerMesh;
 
-                        ChangeBackpackMeshColor(backpackCreator.hightlightMeshColor , readyMeshes.ToArray());
+                        ChangeContainerMeshColor(containerCreator.hightlightMeshColor, readyMeshes.ToArray());
                         break;
                     }
                 }
             }
         }
     }
+
+    public bool IsWithinDetectDistance(Transform anchor, Transform target)
+    {
+        float distance;
+        if (canvas != null)
+        {
+            Vector2 anchorPos;
+            Vector2 targetPos;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvas.transform as RectTransform,
+                RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, anchor.position),
+                canvas.worldCamera,
+                out anchorPos);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvas.transform as RectTransform,
+                RectTransformUtility.WorldToScreenPoint(canvas.worldCamera, target.position),
+                canvas.worldCamera,
+                out targetPos);
+
+            distance = Vector2.Distance(anchorPos, targetPos);
+        }
+        else
+        {
+            distance = Vector3.Distance(anchor.position, target.position);
+        }
+
+        Debug.Log($"ItemMeshDetection: DistanceTo {target.name} = {distance} (detectDistance={detectDistance})");
+        return distance < detectDistance;
+    }
     #endregion
 
     #region 检测是否能放下整个物体
-    bool isSpaceEnough(BackpackMesh backpackMeshScript , GameObject[] thisPackMeshes , out List<GameObject> matchedMeshes)
+    bool isSpaceEnough(ContainerMesh containerMeshScript, GameObject[] thisPackMeshes, out List<GameObject> matchedMeshes)
     {
         matchedMeshes = new List<GameObject>();
-        Vector2 offset = new Vector2(backpackMeshScript.meshPos.x - Vector2.zero.x , backpackMeshScript.meshPos.y - Vector2.zero.y);
+        Vector2 offset = containerMeshScript.meshPos - anchorItemMesh.itemMeshPos;
 
         foreach (ItemMesh itemMesh in itemMeshes)
         {
             bool find_Pos_FitMesh = false;
             foreach (GameObject packMesh in thisPackMeshes)
             {
-                if (itemMesh.itemMeshPos + offset == packMesh.GetComponent<BackpackMesh>().meshPos)
+                ContainerMesh packMeshScript = packMesh.GetComponent<ContainerMesh>();
+                if (itemMesh.itemMeshPos + offset == packMeshScript.meshPos)
                 {
                     find_Pos_FitMesh = true;
-                    if (packMesh.GetComponent<BackpackMesh>().isMeshUsed)
+                    if (packMeshScript.isMeshUsed)
                     {
                         matchedMeshes.Clear();
                         return false;
@@ -128,88 +258,33 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     }
     #endregion
 
-    #region 物体放入背包网格
-    void PutInBackpack(GameObject backpackMesh , GameObject[] selectedMeshes)
+    #region 物体放入容器网格
+    void PutInContainer(GameObject containerMesh, GameObject[] selectedMeshes)
     {
-        parentItem.transform.position = backpackMesh.transform.position;
+        parentItem.transform.position = containerMesh.transform.position;
         foreach (GameObject mesh in selectedMeshes)
         {
-            mesh.GetComponent<BackpackMesh>().isMeshUsed = true;
+            mesh.GetComponent<ContainerMesh>().isMeshUsed = true;
         }
 
-        usingBackpackMeshes = selectedMeshes;
+        usingContainerMeshes = selectedMeshes;
+
+        Debug.Log($"PutInContainer: 放入容器，锚点由 {anchorItemMesh.name} 对齐到 {containerMesh.name}");
     }
     #endregion
 
-
-    #region 物体拖动
-    public void OnBeginDrag(PointerEventData eventData)
+    #region 改变容器网格样式
+    void ChangeContainerMeshColor(Color targetColor, GameObject[] meshes)
     {
-        isDragging = true;
-        if (usingBackpackMeshes != null)
+        foreach (GameObject containerMesh in meshes)
         {
-            foreach (GameObject backpackMesh in usingBackpackMeshes)
+            Image image = containerMesh.GetComponent<Image>();
+            if (image == null)
             {
-                backpackMesh.GetComponent<BackpackMesh>().isMeshUsed = false;
+                Debug.LogWarning($"ItemMeshDetection: 容器网格 {containerMesh.name} 缺少 Image 组件，无法设置颜色。", containerMesh);
+                continue;
             }
-            if (backpackCreator != null) ChangeBackpackMeshColor(backpackCreator.originMeshColor , usingBackpackMeshes);
-            usingBackpackMeshes = null;
-        }
-    }
-    public void OnDrag(PointerEventData eventData)
-    {
-        // 将鼠标移动量转换为 Canvas 下的本地坐标移动
-        Vector2 delta;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            parentRect.parent as RectTransform,
-            eventData.position,
-            canvas.worldCamera,
-            out Vector2 currentPos
-        );
-        
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            parentRect.parent as RectTransform,
-            eventData.position - eventData.delta,
-            canvas.worldCamera,
-            out Vector2 lastPos
-        );
-        
-        delta = currentPos - lastPos;
-        parentRect.anchoredPosition += delta;
-
-        DetectBackpackMesh();
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        isDragging = false;
-
-        if (backpackMesh_S != null && targetMeshes != null && pivotBackpackMesh != null)
-        {
-            // backpackCreator = pivotBackpackMesh.transform.parent.GetComponent<BackpackCreator>();
-            if (isSpaceEnough(backpackMesh_S , backpackCreator.backpackMeshes.ToArray() , out List<GameObject> matchedMeshes))
-            {
-                PutInBackpack(pivotBackpackMesh , matchedMeshes.ToArray());
-            }
-        }
-
-        // 重置值：
-        backpackMesh_S = null;
-        targetMeshes = null;
-        pivotBackpackMesh = null;
-
-        // 恢复颜色
-        if (readyMeshes.Count > 0) ChangeBackpackMeshColor(backpackCreator.originMeshColor , readyMeshes.ToArray());
-        readyMeshes.Clear();
-    }
-    #endregion
-
-    #region 改变背包网格样式
-    void ChangeBackpackMeshColor(Color targetColor , GameObject[] meshes)
-    {
-        foreach (GameObject backpackMesh in meshes)
-        {
-            backpackMesh.GetComponent<Image>().color = targetColor;
+            image.color = targetColor;
         }
     }
     #endregion
@@ -219,21 +294,18 @@ public class ItemMeshDetection : MonoBehaviour, IBeginDragHandler, IDragHandler,
     {
         if (Input.GetKeyDown(rotate_KeyCode))
         {
-            // 保持拖拽位置
-            parentItem.GetComponent<RectTransform>().position = Input.mousePosition;
-
             if (itemMeshes == null || itemMeshes.Length == 0) return;
 
-            // 直接旋转父对象
             RectTransform parentRectTransform = parentItem.GetComponent<RectTransform>();
             parentRectTransform.localEulerAngles += new Vector3(0f, 0f, -90f);
 
-            // 重新计算每个网格的逻辑坐标
             foreach (ItemMesh itemMesh in itemMeshes)
             {
                 Vector2 oldPos = itemMesh.itemMeshPos;
-                itemMesh.itemMeshPos = new Vector2(oldPos.y, -oldPos.x); // 每按下一次 R ，顺时针转 90 度
+                itemMesh.itemMeshPos = new Vector2(oldPos.y, -oldPos.x);
             }
+
+            RefreshItemMeshData();
         }
     }
     #endregion

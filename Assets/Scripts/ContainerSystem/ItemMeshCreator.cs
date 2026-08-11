@@ -6,11 +6,11 @@ using UnityEngine.UI;
 
 public class ItemMeshCreator : MonoBehaviour
 {
-    [Header("背包网格生成脚本")]
-    [Tooltip("用于确保背包网格与物体网格之统一")]
-    public BackpackCreator backpackCreator;
+    [Header("容器网格生成脚本")]
+    [Tooltip("用于确保容器网格与物体网格之统一")]
+    public ContainerCreator containerCreator;
     [Header("物体网格预制体")]
-    [Tooltip("强烈建议同背包网格选择同一预制体")]
+    [Tooltip("强烈建议同容器网格选择同一预制体")]
     public GameObject itemMeshPrefab;
 
     [Header("物体图片")]
@@ -29,12 +29,14 @@ public class ItemMeshCreator : MonoBehaviour
     [ContextMenu("自动生成物体网格")]
     public void CreateItemMesh_Auto()
     {
+        ItemPivot itemPivot = GetComponent<ItemPivot>();
+
         // 获取物体图片尺寸
         float imageWidth = itemImage.GetComponent<RectTransform>().sizeDelta.x;
         float imageHeight = itemImage.GetComponent<RectTransform>().sizeDelta.y;
 
-        // 强制统一使用背包网格尺寸来进行比对
-        itemMeshPrefab.GetComponent<RectTransform>().sizeDelta = new Vector2(backpackCreator.meshWidth , backpackCreator.meshHeight);
+        // 强制统一使用容器网格尺寸来进行比对
+        itemMeshPrefab.GetComponent<RectTransform>().sizeDelta = new Vector2(containerCreator.meshWidth, containerCreator.meshHeight);
         itemMeshHeight = itemMeshPrefab.GetComponent<RectTransform>().sizeDelta.y;
         itemMeshWidth = itemMeshPrefab.GetComponent<RectTransform>().sizeDelta.x;
 
@@ -59,9 +61,9 @@ public class ItemMeshCreator : MonoBehaviour
             }
         }
 
-        for (int i = 0 ; i < meshNumber_Hor ; i++)
+        for (int i = 0; i < meshNumber_Hor; i++)
         {
-            for (int j = 0 ; j < meshNumber_Ver ; j++)
+            for (int j = 0; j < meshNumber_Ver; j++)
             {
                 GameObject newItemMesh = Instantiate(itemMeshPrefab, transform);
                 RectTransform newMeshRect = newItemMesh.GetComponent<RectTransform>();
@@ -70,9 +72,13 @@ public class ItemMeshCreator : MonoBehaviour
 
                 ItemMesh itemMeshScript = newItemMesh.GetComponent<ItemMesh>() ?? newItemMesh.AddComponent<ItemMesh>();
 
-                itemMeshScript.itemMeshPos = new Vector2(i , -j);
+                itemMeshScript.itemMeshPos = new Vector2(i, -j);
 
                 itemMeshes.Add(newItemMesh);
+                if (itemPivot != null)
+                {
+                    itemPivot.itemMeshPositions.Add(newItemMesh.GetComponent<ItemMesh>().itemMeshPos); // 添加网格本地坐标到列表中
+                }
             }
         }
 
@@ -85,6 +91,7 @@ public class ItemMeshCreator : MonoBehaviour
     public void DestroyItemMesh()
     {
         Transform[] itemMeshesTransform = GetComponentsInChildren<Transform>();
+        ItemPivot itemPivot = GetComponent<ItemPivot>();
 
         foreach (Transform child in itemMeshesTransform)
         {
@@ -95,6 +102,10 @@ public class ItemMeshCreator : MonoBehaviour
         }
 
         itemMeshes.Clear();
+        if (itemPivot != null)
+        {
+            itemPivot.itemMeshPositions.Clear(); // 清空坐标列表
+        }
 
         Debug.Log("已清除所有物体网格！");
     }
@@ -156,9 +167,16 @@ public class ItemMeshCreator : MonoBehaviour
 
         ItemMesh itemMeshScript = newItemMesh.GetComponent<ItemMesh>() ?? newItemMesh.AddComponent<ItemMesh>();
 
-        itemMeshScript.itemMeshPos = new Vector2(0 , 0);
+        itemMeshScript.itemMeshPos = new Vector2(0, 0);
 
         itemMeshes.Add(newItemMesh);
+
+        ItemPivot itemPivot = GetComponent<ItemPivot>();
+        if (itemPivot != null)
+        {
+            itemPivot.itemMeshPositions.Add(newItemMesh.GetComponent<ItemMesh>().itemMeshPos);
+        }
+
         Debug.Log("成功添加锚点网格!");
     }
     #endregion
