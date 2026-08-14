@@ -4,11 +4,22 @@ using UnityEngine;
 
 // 存储各种游戏数据类型（包括物品、时间、玩家状态、场景等）
 [System.Serializable]
-public class SaveData
+public class GameSaveData
 {
+    public int saveID; // 存档编号
+    public string savePath; // 存档文件路径
+    public bool isAutoSave; // 存档方式（是否为自动存档）
     public TimeData timeData;
     public List<ContainerData> containersData = new List<ContainerData>();
     public PlayerData playerData;
+
+    // 构造函数
+    public GameSaveData(int id = 0 , string path = "no path" , bool autoSave = false)
+    {
+        saveID = id;
+        savePath = path;
+        isAutoSave = autoSave;
+    }
 }
 
 [System.Serializable]
