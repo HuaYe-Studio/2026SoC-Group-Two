@@ -22,9 +22,6 @@ public class CurrencySystem : MonoBehaviour
         // 这里暂不添加判断总数是否小于0的逻辑，相关支付逻辑建议在交互过程中编写（如果买不起就无法支付等）
     }
     // 获取现有的货币总量
-    public float GetCurrencyInTotal()
-    {
-        return currency_total;
-    }
+    public float GetCurrencyInTotal() => currency_total;
     #endregion
 }

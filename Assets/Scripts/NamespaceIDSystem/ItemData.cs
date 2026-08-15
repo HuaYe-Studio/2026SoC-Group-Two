@@ -9,5 +9,4 @@ public class ItemData : ScriptableObject
     public NamespaceID id; // 物品ID
     public string displayName;
     public Sprite image;
-    public Dictionary<GameObject , Vector2> container_MeshPosition; // 物品所在容器及所处容器网格坐标
 }

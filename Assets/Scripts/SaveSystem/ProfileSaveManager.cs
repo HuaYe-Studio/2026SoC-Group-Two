@@ -30,8 +30,13 @@ public class ProfileSaveManager : MonoBehaviour
     }
     #endregion
 
+    void Awake()
+    {
+        LoadProfile();
+    }
+
     #region 公共方法
-    // 保存全局数据
+    // 保存全局数据（建议在退出游戏时进行）
     public void SaveProfile()
     {
         // 保存解锁成就

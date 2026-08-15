@@ -31,39 +31,55 @@ public class GameSaveManager : MonoBehaviour
     }
     #endregion
 
+    void Awake()
+    {
+        LoadAllGameSave();
+    }
+
     // 存档列表
     public List<GameSaveData> saveDatas = new List<GameSaveData>();
 
-    #region 公共方法
-    // 读取所有游戏存档
-    public void LoadAllGameSave()
+    #region 载入所有game存档（考虑到开始菜单的要求）
+    async void LoadAllGameSave()
     {
-        
+        // 无存档文件夹情况；
+        if (!Directory.Exists(gameSaveFolder))
+        {
+            Debug.Log("gamesave 文件夹不存在，即将创建文件夹...");
+            Directory.CreateDirectory(gameSaveFolder); // 创建gamesave文件夹
+            if (Directory.Exists(gameSaveFolder))
+            {
+                Debug.Log($"成功创建文件夹：{gameSaveFolder}");
+            }
+            else
+            {
+                Debug.LogError("创建gamesave文件夹失败！");
+            }
+        }
+
+        // 载入gamesave文件夹中的存档json文件：
+        string[] gameSaveFiles = Directory.GetFiles(gameSaveFolder , "awotr_save_*.json");
+
+        foreach (string filePath in gameSaveFiles)
+        {
+            string json = File.ReadAllText(filePath);
+            GameSaveData gameSaveData = JsonUtility.FromJson<GameSaveData>(json);
+            saveDatas.Add(gameSaveData);
+            Debug.Log($"成功加载存档：{Path.GetFileName(filePath)}");
+        }
+
+        Debug.Log($"game存档加载完成，共加载{saveDatas.Count}个存档");
     }
+    #endregion
+
+    #region 公共方法
     // 保存游戏数据
     public void SaveGame(GameSaveData newSaveData)
     {
         string json = JsonUtility.ToJson(newSaveData , true);
 
-        // 当Json文件不存在：
-        if (!File.Exists(newSaveData.savePath))
-        {
-            Debug.LogError($"文件 {newSaveData.savePath} 不存在！");
-        }
-
-        // 更新保存已有存档：
-        else
-        {
-            File.WriteAllText(newSaveData.savePath , json);
-            Debug.Log($"存档文件 {newSaveData.savePath} 已保存");
-        }
-    }
-
-    // 加载游戏数据
-    public void LoadGame(GameSaveData saveData_toLoad)
-    {
-        string jsonString = File.ReadAllText(GetFilePath(saveData_toLoad));
-        GameSaveData gameData = JsonUtility.FromJson<GameSaveData>(jsonString);
+        File.WriteAllText(newSaveData.savePath , json);
+        Debug.Log($"存档文件 {newSaveData.savePath} 已保存");
     }
 
     // 获取某个存档的文件路径
@@ -83,9 +99,21 @@ public class GameSaveManager : MonoBehaviour
     // 新建存档（游戏进度从0开始）
     public void CreateNewGameSave()
     {
-        int newID = saveDatas[saveDatas.Count - 1].saveID + 1;
-        GameSaveData newSaveData = new GameSaveData(newID , Path.Combine(gameSaveFolder, $"{jsonFilePrefix}{newID}.json"));
-        saveDatas.Add(newSaveData);
+        // 当存档列表不为空：
+        if (saveDatas.Count >= 1)
+        {
+            int newID = saveDatas[saveDatas.Count - 1].saveID + 1;
+            GameSaveData newSaveData = new GameSaveData(newID , Path.Combine(gameSaveFolder, $"{jsonFilePrefix}{newID}.json"));
+            saveDatas.Add(newSaveData);
+        }
+        
+        // 若没有存档（第一次进行游玩）：
+        else
+        {
+            int newID = 0;
+            GameSaveData newSaveData = new GameSaveData(newID , Path.Combine(gameSaveFolder, $"{jsonFilePrefix}{newID}.json"));
+            saveDatas.Add(newSaveData);
+        }
     }
 
     // 删除存档
@@ -95,13 +123,6 @@ public class GameSaveManager : MonoBehaviour
         Debug.Log($"已删除存档文件 {saveData_ToDelete.savePath}");
         saveDatas.Remove(saveData_ToDelete);
         Debug.Log("游戏存档移除成功！");
-    }
-    #endregion
-
-    #region 应用存档数据
-    void ApplyGameSaveData(GameSaveData gameSaveData)
-    {
-        
     }
     #endregion
 }
