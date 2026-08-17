@@ -4,6 +4,7 @@ using WorldTime;
 using Scene;
 using Status;
 using Environment;
+using WorldSeed;
 
 public class GameFlowManager : MonoBehaviour
 {
@@ -36,9 +37,14 @@ public class GameFlowManager : MonoBehaviour
     {
         if (TimeManager.Instance != null)
         {
-            TimeManager.Instance.OnHourChanged -= CheckGameEnd;
+            TimeManager.Instance.OnHourChanged -= CheckGameEndForTime;
         }
 
+        if (StatusManager.Instance != null)
+        {
+            StatusManager.Instance.OnAnyStatusEmpty -= CheckGameEndForStatus;
+        }
+        
         if (Instance == this)
         {
             Instance = null;
@@ -60,12 +66,13 @@ public class GameFlowManager : MonoBehaviour
     //之后挂在mainmenu的按钮上即可
     private void InitializeGame()
     {
-        if (TimeManager.Instance == null|| StatusManager.Instance == null || EnvironmentManager.Instance == null)
+        if (TimeManager.Instance == null|| StatusManager.Instance == null || EnvironmentManager.Instance == null || WorldSeedManager.Instance == null)
         {
             this.enabled = false;
             return;
         }
         
+        WorldSeedManager.Instance.InitializeWorldSeed();
         TimeManager.Instance.InitializeTime();
         StatusManager.Instance.InitializeStatusFromConfig();
         EnvironmentManager.Instance.InitializeWeather();
@@ -77,8 +84,11 @@ public class GameFlowManager : MonoBehaviour
         
         isPlaying = true;
         
-        TimeManager.Instance.OnHourChanged -= CheckGameEnd;
-        TimeManager.Instance.OnHourChanged += CheckGameEnd;
+        TimeManager.Instance.OnHourChanged -= CheckGameEndForTime;
+        TimeManager.Instance.OnHourChanged += CheckGameEndForTime;
+        
+        StatusManager.Instance.OnAnyStatusEmpty -= CheckGameEndForStatus;
+        StatusManager.Instance.OnAnyStatusEmpty += CheckGameEndForStatus;
     }
 
     #endregion
@@ -92,21 +102,29 @@ public class GameFlowManager : MonoBehaviour
         #else
             Application.Quit();
         #endif
-        
-        isPlaying = false;
     }
 
-    private void CheckGameEnd(DateTime checkTime)
+    private void CheckGameEndForTime(DateTime checkTime)
     {
         if (checkTime >= gameEndTime)
         {
-            TimeManager.Instance.OnHourChanged -= CheckGameEnd;
+            TimeManager.Instance.OnHourChanged -= CheckGameEndForTime;
+            OnGameEnd();
+        }
+    }
+
+    private void CheckGameEndForStatus(StatusType emptyStatusType)
+    {
+        if (emptyStatusType == StatusType.Healthy || emptyStatusType == StatusType.Hungry)
+        {
+            Debug.Log($"因为{emptyStatusType}归零，确认游戏失败");
             OnGameEnd();
         }
     }
 
     private void OnGameEnd()
     {
+        isPlaying = false;
         QuitGame();
     }
     
