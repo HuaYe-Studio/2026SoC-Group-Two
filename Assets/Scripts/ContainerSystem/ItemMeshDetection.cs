@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 public class ItemMeshDetection : MonoBehaviour
 {
@@ -21,7 +23,7 @@ public class ItemMeshDetection : MonoBehaviour
     [Header("物体放置的容器网格")]
     public GameObject[] usingContainerMeshes;
     [Header("物体网格旋转控制按钮")]
-    public KeyCode rotate_KeyCode;
+    public Key itemRotationKey;
 
     #region 私有成员
     GameObject[] targetMeshes;
@@ -292,7 +294,7 @@ public class ItemMeshDetection : MonoBehaviour
     #region 物体网格旋转
     void ItemMeshRotate()
     {
-        if (Input.GetKeyDown(rotate_KeyCode))
+        if (Keyboard.current?[itemRotationKey].wasPressedThisFrame ?? false)
         {
             if (itemMeshes == null || itemMeshes.Length == 0) return;
 

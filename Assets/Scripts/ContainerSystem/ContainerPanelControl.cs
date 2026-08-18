@@ -2,13 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 public class BackpackKeyboradInput : MonoBehaviour
 {
     [Header("背包面板画布")]
     public Canvas backpackPanel;
     [Header("背包面板召唤/隐藏按键")]
-    public KeyCode backpack_KeyCode;
+    public Key backpack_Key;
     private bool isBackpackOpened = false;
 
     void Start()
@@ -24,7 +26,7 @@ public class BackpackKeyboradInput : MonoBehaviour
     #region 背包按键输入控制
     void Open_Close_Backpack()
     {
-        if (Input.GetKeyDown(backpack_KeyCode))
+        if (Keyboard.current?[backpack_Key].wasPressedThisFrame ?? false)
         {
             isBackpackOpened = !isBackpackOpened;
 
