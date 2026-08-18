@@ -4,16 +4,30 @@ public class PlayerController : MonoBehaviour
 {
     private PlayerInputControl inputControl;
     public Vector2 inputDirection;
-    private CharacterController controller;
+    [SerializeField]private CharacterController controller;
     [Header("Basic Paraments")]
     public float moveSpeed;
     public float gravity=-9.8f;
-    public Vector3 velocity;
+    private Vector3 velocity;
 
     private void Awake()
     {
-        controller=GetComponent<CharacterController>();
-        inputControl = new PlayerInputControl();
+        
+        if(controller==null)
+        {
+            Debug.LogError("Find none CharacterController");
+            controller=gameObject.AddComponent<CharacterController>();
+        }
+        try
+        {
+            inputControl = InputManager.Instance.Input;
+        }
+        catch
+        {
+            Debug.Log("Find none InputManager.");
+            inputControl = new PlayerInputControl();
+        }
+
     }
 
     private void OnEnable()

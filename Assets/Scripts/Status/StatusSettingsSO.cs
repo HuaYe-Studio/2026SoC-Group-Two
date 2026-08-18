@@ -7,7 +7,7 @@ namespace Status
     {
         Healthy,     
         Hungry,
-        Hygiene,   //卫生
+        Mental,
         Stamina    //体力
     }
     

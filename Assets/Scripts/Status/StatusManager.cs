@@ -16,7 +16,8 @@ namespace Status
 
         //这两个到时候也应该被存档
         private Dictionary<StatusType,DateTime> statusLastUpdateMap = new Dictionary<StatusType, DateTime>();
-        
+
+        public event Action<StatusType> OnAnyStatusEmpty;  
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -68,6 +69,12 @@ namespace Status
                 
                 var newModule =new StatusModule(config.statusType,config.defaultValue,config.defaultMax,config.defaultMin);
                 statusMap.TryAdd(config.statusType, newModule);
+
+                newModule.OnStatusMin += () =>
+                {
+                    Debug.Log($"{config.statusType}已归零，广播之");
+                    OnAnyStatusEmpty?.Invoke(config.statusType);
+                };
             }
         }
 
