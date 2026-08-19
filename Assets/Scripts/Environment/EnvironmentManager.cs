@@ -24,6 +24,9 @@ namespace Environment
         [SerializeField]private List<SkySchedule> dailySchedules = new List<SkySchedule>();
         [SerializeField]private float transitionDuration = 10f;
         private bool isTransitioning = false;
+        private DateTime lastCheckedTime;
+        private float timeBigJumpThreshold = 120f;
+        private float timeJumpThreshold = 10f;
 
         public float CurrentSunIntensityMultiplier =>
             currentSetting != null ? currentSetting.lightIntensityMultiplier : 1.0f;
@@ -47,6 +50,7 @@ namespace Environment
                 TimeManager.Instance.OnMinuteChanged += CheckSchedule;
             }
             
+            lastCheckedTime = TimeManager.Instance.CurrentTime;
         }
 
         private void OnDestroy()
@@ -56,6 +60,7 @@ namespace Environment
                 TimeManager.Instance.OnMinuteChanged -= CheckSchedule;
             }
         }
+        
         public void InitializeWeather()
         {
             skySettingsMap.Clear();
@@ -65,7 +70,7 @@ namespace Environment
                 var weatherState = (settings.timePeriod, settings.weatherType);
                 skySettingsMap.TryAdd(weatherState, settings);
             }
-            currentTimePeriod=GetTimePeriod(TimeManager.Instance.CurrentTime);
+            currentTimePeriod = GetTimePeriod(TimeManager.Instance.CurrentTime);
             RefreshEnvironment(isInstant:true);
         }
 
@@ -97,21 +102,32 @@ namespace Environment
             if(isTransitioning)
                 return;
 
+            TimeSpan diff = currentTime - lastCheckedTime;
+            lastCheckedTime = currentTime;
+            
             TimePeriod targetTimePeriod = GetTimePeriod(currentTime);
+            int periodTotalMinutes = 0;
+            
+            foreach (var schedule in dailySchedules)
+            {
+                if (schedule.timePeriod == targetTimePeriod)
+                {
+                    periodTotalMinutes = schedule.triggerHour * 60 + schedule.triggerMinute;
+                    break;
+                }
+            }
+
+            int currentTotalMinutes = currentTime.Hour * 60 + currentTime.Minute;
+            int minutesToPeriod = currentTotalMinutes - periodTotalMinutes;
+            if (minutesToPeriod < 0)
+                minutesToPeriod = 1440;
+
+            bool isTimeBigJump = diff.TotalMinutes >= timeBigJumpThreshold;
+            bool isJustStart = minutesToPeriod <= timeJumpThreshold;
+            bool shouldInstant = isTimeBigJump && !isJustStart;
+
             if (targetTimePeriod != currentTimePeriod)
             {
-                bool shouldInstant = false;
-                
-                int oldIndex = dailySchedules.FindIndex(x => x.timePeriod == currentTimePeriod);
-                int newIndex = dailySchedules.FindIndex(x => x.timePeriod == targetTimePeriod);
-
-                if (oldIndex != -1 && newIndex != -1)
-                {
-                    int count = dailySchedules.Count;
-                    int distance = (newIndex - oldIndex + count) % count;
-                    if (distance > 1)
-                        shouldInstant = true;
-                }
                 currentTimePeriod = targetTimePeriod;
                 RefreshEnvironment(isInstant : shouldInstant);
             }
