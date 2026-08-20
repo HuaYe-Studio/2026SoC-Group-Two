@@ -9,4 +9,5 @@ public class ItemData : ScriptableObject
     public NamespaceID id; // 物品ID
     public string displayName;
     public Sprite image;
+    public float itemPrice; // 物品价值
 }
