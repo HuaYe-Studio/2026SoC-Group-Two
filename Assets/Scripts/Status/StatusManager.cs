@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Video;
 using WorldTime;
+using NPC;
 
 namespace Status
 {
@@ -40,6 +41,9 @@ namespace Status
             {
                 TimeManager.Instance.OnMinuteChanged += OnTimeChanged;
             }
+
+            DialogueEvents.OnRaised -= OnDialogueEvent;
+            DialogueEvents.OnRaised += OnDialogueEvent;
         }
 
         private void OnDestroy()
@@ -48,6 +52,8 @@ namespace Status
             {
                 TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
             }
+            
+            DialogueEvents.OnRaised -= OnDialogueEvent;
             
             if(Instance == this)
             {
@@ -80,7 +86,7 @@ namespace Status
 
         private void OnTimeChanged(DateTime currentTime)
         {
-            if (!GameFlowManager.Instance.isPlaying)
+            if (!GameFlowManager.Instance.isGameActive)
                 return;
             
             foreach (var config in statusSettings.InitialStatusConfigs)
@@ -121,6 +127,16 @@ namespace Status
             }
             return false;
         }
+
+        public float GetStatusValue(StatusType statusType)
+        {
+            if (statusMap.TryGetValue(statusType, out StatusModule module))
+            {
+                return module.CurrentValue;
+            }
+            
+            return -1;
+        }
         
         public void ChangeStatusValue(StatusType statusType, float amount)
         {
@@ -134,6 +150,20 @@ namespace Status
         {
             statusMap.TryGetValue(statusType, out StatusModule module);
             return module;
+        }
+
+        private void OnDialogueEvent(string id, object data)
+        {
+            if (id != "status.change") return;
+            
+            if (data is (StatusType type, float changeAmount))
+            {
+                ChangeStatusValue(type, changeAmount);
+            }
+            else
+            {
+                Debug.Log("收到 Status_Change 事件，但携带的数据不是预期的元组");
+            }
         }
     }
 }

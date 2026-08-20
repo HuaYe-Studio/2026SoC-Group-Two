@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Collections.Generic;
 using WorldTime;
 using Scene;
 using Status;
@@ -14,6 +15,8 @@ public class GameFlowManager : MonoBehaviour
     private int gameTotalDay = 7;
     
     public bool isPlaying { get; private set; }
+    private HashSet<string> pauseLocks = new HashSet<string>();
+    public bool isGameActive => isPlaying && pauseLocks.Count > 0;
 
     private void Awake()
     {
@@ -27,7 +30,6 @@ public class GameFlowManager : MonoBehaviour
     
     private void Update()
     {
-        //待inputsystem替换，先用着
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             QuitGame();
@@ -129,5 +131,21 @@ public class GameFlowManager : MonoBehaviour
     }
     
     #endregion
+    
+    public void PauseGameplay(string pauseReason)
+    {
+        if (pauseLocks.Add(pauseReason))
+        {
+            Debug.Log($"游戏因为{pauseReason}申请已暂停");
+        }
+    }
+    
+    public void ResumeGameplay(string pauseReason)
+    {
+        if (pauseLocks.Remove(pauseReason))
+        {
+            Debug.Log($"游戏已经解锁因为{pauseReason}申请的暂停");
+        }
+    }
 }
 
