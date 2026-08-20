@@ -40,7 +40,7 @@ namespace Environment
             float sunXAngle = CalculateSunXAngle(dayProgress);
             sunLight.transform.rotation = Quaternion.Euler(sunXAngle,sunYRotation, 0f);
 
-            float intensityFactor = CalculateSunLightIntensity(dayProgress);
+            float intensityFactor = CalculateDayLightFactor(dayProgress);
             float baseIntensity = Mathf.Lerp(minLightIntensity, maxLightIntensity, intensityFactor);
 
             float weatherLightMultiplier = (EnvironmentManager.Instance != null)
@@ -63,7 +63,10 @@ namespace Environment
             float sunXAngle = Mathf.Lerp(AngleXInMidNight, AngleXInNewMidNight, dayProgress);
             return sunXAngle;
         }
-        private float CalculateSunLightIntensity(float dayProgress)
+        
+                
+        //原名CalculateSunLightIntensity有歧义，实际上该方法是约束计算Lerp的光照强度，故改名
+        private float CalculateDayLightFactor(float dayProgress)
         {
             //早上六点强度为0，十八点为0.以此变换正弦波
             //之后如果要有季节乘以季节系数可能吧

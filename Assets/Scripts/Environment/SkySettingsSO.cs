@@ -8,6 +8,7 @@ namespace Environment
     {
         [Header("Basic Settings")]
         public WeatherType weatherType;
+        public TimePeriod timePeriod;
         public SkyMode skyMode;
         
         [Header("Sky Material")]
