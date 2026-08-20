@@ -16,6 +16,8 @@ public class Health_UI : MonoBehaviour
 
     void Start()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         // 获取健康状态最值
         maxHealthValue = StatusManager.Instance.GetStatusModule(StatusType.Healthy).MaxValue;
         minHealthValue = StatusManager.Instance.GetStatusModule(StatusType.Healthy).MinValue;
@@ -23,6 +25,9 @@ public class Health_UI : MonoBehaviour
 
     void Update()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
+
         // 获取玩家健康状态
         currentHealthValue = StatusManager.Instance.GetStatusModule(StatusType.Healthy).CurrentValue;
 

@@ -5,11 +5,11 @@ using UnityEngine.UI;
 
 public class ItemMesh : MonoBehaviour
 {
-    [Header("物体网格坐标")]
+    [Header("物体网格本地坐标系坐标")]
     public Vector2 itemMeshPos = new Vector2();
     [Header("物体网格生成器")]
     public ItemMeshCreator itemMeshCreator;
-    [Header("添加网格预制体 ")]
+    [Header("拓展网格预制体 ")]
     public GameObject itemMeshPrefab;
 
     #region 手动添加网格
@@ -64,6 +64,12 @@ public class ItemMesh : MonoBehaviour
         itemMeshScript.itemMeshPos = newMeshPos;
 
         itemMeshCreator.itemMeshes.Add(newItemMesh);
+        
+        ItemPivot itemPivot = GetComponentInParent<ItemPivot>();
+        if (itemPivot != null)
+        {
+            itemPivot.itemMeshPositions.Add(newItemMesh.GetComponent<ItemMesh>().itemMeshPos);
+        }
     }
     #endregion
 }
