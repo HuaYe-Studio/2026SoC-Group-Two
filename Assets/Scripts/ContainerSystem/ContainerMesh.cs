@@ -77,10 +77,32 @@ public class ContainerMesh : MonoBehaviour
     }
     #endregion
 
-    #region 网格样式切换
-    public void SetContainerMeshStyle()
+    #region 删除网格
+    [ContextMenu("删除此网格")]
+    public void DeleteContainerMesh()
     {
-        
+        if (containerCreator == null)
+        {
+            Debug.LogWarning("无法删除网格：未找到 ContainerCreator。", gameObject);
+            return;
+        }
+
+        if (isMeshUsed)
+        {
+            Debug.LogWarning($"无法删除网格 {name}：该网格已被物品占用。", gameObject);
+            return;
+        }
+
+        containerCreator.containerMeshes.Remove(gameObject);
+
+        if (Application.isPlaying)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            DestroyImmediate(gameObject);
+        }
     }
     #endregion
 }

@@ -95,4 +95,12 @@ public class ContainerCreator : MonoBehaviour
         Debug.Log($"成功拓展网格：({newMeshPos.x} , {newMeshPos.y})");
     }
     #endregion
+
+    void Awake()
+    {
+        if (GetComponent<Container_ItemManager>() == null)
+        {
+            this.AddComponent<Container_ItemManager>();
+        }
+    }
 }

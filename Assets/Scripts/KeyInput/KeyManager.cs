@@ -44,29 +44,35 @@ public class KeyManager : MonoBehaviour
     [Header("游戏暂停/继续")]
     public Key game_PauseOrContinue_key = Key.Escape;
     [Header("背包容器界面呼唤键")]
-    public Key backpack_Call_key = Key.B;
+    public Key container_Call_key = Key.B;
     [Header("容器界面物体旋转")]
     public Key item_Rotation_key = Key.R;
     #endregion
 
-    // 键位列表 - 主要用于冲突检测
-    private List<Key> keyList;
-
-    void Awake() 
-    {
-        keyList = new List<Key>
-        {
-            player_MoveUp_key, player_MoveDown_key, player_MoveLeft_key, player_MoveRight_key,
-            player_Interact_key, game_PauseOrContinue_key, backpack_Call_key, item_Rotation_key
-        };
-    }
-
     #region 改键冲突检测 - 主要供负责设置选项的组员使用
     public bool CanKeyBeChanged(Key key_ToChange , Key newKey)
     {
-        foreach (Key key in keyList)
+        if (newKey == Key.None) return true;
+        
+        var currentKeys = new List<Key>
         {
-            if (newKey == key && key != key_ToChange) return false;
+            player_MoveUp_key,
+            player_MoveDown_key,
+            player_MoveLeft_key,
+            player_MoveRight_key,
+            player_Interact_key,
+            game_PauseOrContinue_key,
+            container_Call_key,
+            item_Rotation_key
+        };
+
+        foreach (Key key in currentKeys)
+        {
+            if (newKey == key && key != key_ToChange)
+            {
+                Debug.Log($"按键 {newKey} 已被其他功能占用");
+                return false;
+            }
         }
         return true;
     }

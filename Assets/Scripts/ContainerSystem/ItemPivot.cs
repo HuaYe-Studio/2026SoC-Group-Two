@@ -9,4 +9,8 @@ public class ItemPivot : MonoBehaviour
     public List<Vector2> itemMeshPositions = new List<Vector2>();
     [Header("物体图片")]
     public Image itemImage;
+    [Header("物体所处容器")]
+    public GameObject containerOfItem;
+    [Header("物体锚点所在容器本地坐标")]
+    public Vector2 pivotPositionInContainer;
 }

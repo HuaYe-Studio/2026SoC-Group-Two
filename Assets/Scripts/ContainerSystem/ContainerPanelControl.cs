@@ -5,38 +5,40 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 
-public class BackpackKeyboradInput : MonoBehaviour
+public class ContainerKeyboradInput : MonoBehaviour
 {
-    [Header("背包面板画布")]
-    public Canvas backpackPanel;
-    [Header("背包面板召唤/隐藏按键")]
-    public Key backpack_Key;
-    private bool isBackpackOpened = false;
+    [Header("容器面板画布")]
+    public Canvas containerPanel;
+    [Header("容器面板召唤/隐藏按键")]
+    public Key container_Key;
+    private bool isContainerOpened = false;
 
     void Start()
     {
-        isBackpackOpened = false;
+        isContainerOpened = false;
+        container_Key = KeyManager.Instance.container_Call_key;
     }
 
     void Update()
     {
-        Open_Close_Backpack();
+        Open_Close_Container();
     }
 
-    #region 背包按键输入控制
-    void Open_Close_Backpack()
+    #region 容器按键输入控制
+    void Open_Close_Container()
     {
-        if (Keyboard.current?[backpack_Key].wasPressedThisFrame ?? false)
+        if (Keyboard.current?[container_Key].wasPressedThisFrame ?? false)
         {
-            isBackpackOpened = !isBackpackOpened;
+            isContainerOpened = !isContainerOpened;
 
-            if (isBackpackOpened)
+            if (isContainerOpened)
             {
-                backpackPanel.gameObject.SetActive(true);
+                containerPanel.gameObject.SetActive(true);
+                GetComponent<Container_ItemManager>().LoadItemInContainer();
             }
             else
             {
-                backpackPanel.gameObject.SetActive(false);
+                containerPanel.gameObject.SetActive(false);
             }
         }
     }
@@ -45,8 +47,9 @@ public class BackpackKeyboradInput : MonoBehaviour
     #region 关闭按钮事件
     public void onCloseBtnClick()
     {
-        isBackpackOpened = false;
-        backpackPanel.gameObject.SetActive(false);
+        isContainerOpened = false;
+        containerPanel.gameObject.SetActive(false);
+        GetComponent<Container_ItemManager>().HideItemInContainer();
     }
     #endregion
 }

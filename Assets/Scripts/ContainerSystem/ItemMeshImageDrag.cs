@@ -11,6 +11,8 @@ public class ItemMeshImageDrag : MonoBehaviour, IBeginDragHandler, IDragHandler,
     private Transform targetTransform;
     private Canvas this_Canvas;
     private ItemMeshDetection itemMeshDetection;
+    private Vector2 lastAnchoredPosition;
+    private bool hasLastPosition;
     public Vector3 lastPosition;
 
     void Start()
@@ -41,6 +43,11 @@ public class ItemMeshImageDrag : MonoBehaviour, IBeginDragHandler, IDragHandler,
     public void OnBeginDrag(PointerEventData eventData)
     {
         isDragging = true;
+        if (parent_rectTransform != null)
+        {
+            lastAnchoredPosition = parent_rectTransform.anchoredPosition;
+            hasLastPosition = true;
+        }
         itemMeshDetection?.OnBeginDrag();
     }
     public void OnDrag(PointerEventData eventData)
@@ -82,7 +89,13 @@ public class ItemMeshImageDrag : MonoBehaviour, IBeginDragHandler, IDragHandler,
     public void OnEndDrag(PointerEventData eventData)
     {
         isDragging = false;
-        itemMeshDetection?.OnEndDrag();
+        bool placed = itemMeshDetection == null || itemMeshDetection.OnEndDrag();
+        if (!placed && hasLastPosition && parent_rectTransform != null)
+        {
+            parent_rectTransform.anchoredPosition = lastAnchoredPosition;
+        }
+
+        hasLastPosition = false;
     }
     #endregion
 }

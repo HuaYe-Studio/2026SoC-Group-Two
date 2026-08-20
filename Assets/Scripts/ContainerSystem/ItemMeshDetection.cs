@@ -44,6 +44,8 @@ public class ItemMeshDetection : MonoBehaviour
             Debug.LogWarning("ItemMeshDetection: 未指定 parentItem，已自动设置为当前 GameObject。", gameObject);
         }
 
+        itemRotationKey = KeyManager.Instance.item_Rotation_key;
+
         // 获取所有容器网格
         containerMeshes = GameObject.FindGameObjectsWithTag("containermesh");
         if (containerMeshes.Length == 0)
@@ -112,6 +114,12 @@ public class ItemMeshDetection : MonoBehaviour
     {
         isDragging = true;
         RefreshItemMeshData();
+        ItemPivot itemPivot = GetComponentInParent<ItemPivot>();
+        if (itemPivot != null && itemPivot.containerOfItem != null)
+        {
+            Container_ItemManager itemManager = itemPivot.containerOfItem.GetComponent<Container_ItemManager>();
+            itemManager?.RemoveItem(itemPivot);
+        }
         if (usingContainerMeshes != null)
         {
             foreach (GameObject containerMesh in usingContainerMeshes)
@@ -128,15 +136,17 @@ public class ItemMeshDetection : MonoBehaviour
         DetectContainerMesh();
     }
 
-    public void OnEndDrag()
+    public bool OnEndDrag()
     {
         isDragging = false;
+        bool placed = false;
 
-        if (containerMesh_S != null && targetMeshes != null && pivotContainerMesh != null)
+        if (containerMesh_S != null && targetMeshes != null && pivotContainerMesh != null && containerCreator != null)
         {
             if (isSpaceEnough(containerMesh_S, containerCreator.containerMeshes.ToArray(), out List<GameObject> matchedMeshes))
             {
                 PutInContainer(pivotContainerMesh, matchedMeshes.ToArray());
+                placed = true;
             }
         }
 
@@ -146,6 +156,8 @@ public class ItemMeshDetection : MonoBehaviour
 
         if (readyMeshes.Count > 0 && containerCreator != null) ChangeContainerMeshColor(containerCreator.originMeshColor, readyMeshes.ToArray());
         readyMeshes.Clear();
+
+        return placed;
     }
     #endregion
 
@@ -164,7 +176,6 @@ public class ItemMeshDetection : MonoBehaviour
 
         if (anchorItemMesh == null)
         {
-            Debug.LogWarning("ItemMeshDetection: 无锚点，检测中止。", gameObject);
             return;
         }
 
@@ -219,7 +230,6 @@ public class ItemMeshDetection : MonoBehaviour
             distance = Vector3.Distance(anchor.position, target.position);
         }
 
-        Debug.Log($"ItemMeshDetection: DistanceTo {target.name} = {distance} (detectDistance={detectDistance})");
         return distance < detectDistance;
     }
     #endregion
@@ -271,6 +281,19 @@ public class ItemMeshDetection : MonoBehaviour
 
         usingContainerMeshes = selectedMeshes;
 
+        ContainerMesh selectedContainerMesh = containerMesh.GetComponent<ContainerMesh>();
+        Container_ItemManager itemManager = selectedContainerMesh != null && selectedContainerMesh.containerCreator != null
+            ? selectedContainerMesh.containerCreator.GetComponent<Container_ItemManager>()
+            : null;
+        ItemPivot itemPivot = GetComponentInParent<ItemPivot>();
+        if (itemManager == null || itemPivot == null)
+        {
+            Debug.LogWarning("PutInContainer: 无法找到容器物品管理器或 ItemPivot，已取消登记。", gameObject);
+            return;
+        }
+
+        itemManager.AddItem(itemPivot, selectedContainerMesh.meshPos);
+
         Debug.Log($"PutInContainer: 放入容器，锚点由 {anchorItemMesh.name} 对齐到 {containerMesh.name}");
     }
     #endregion
@@ -283,7 +306,6 @@ public class ItemMeshDetection : MonoBehaviour
             Image image = containerMesh.GetComponent<Image>();
             if (image == null)
             {
-                Debug.LogWarning($"ItemMeshDetection: 容器网格 {containerMesh.name} 缺少 Image 组件，无法设置颜色。", containerMesh);
                 continue;
             }
             image.color = targetColor;
