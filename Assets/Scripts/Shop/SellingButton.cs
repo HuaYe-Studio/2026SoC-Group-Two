@@ -18,7 +18,7 @@ public class SellingButton : MonoBehaviour
     void Awake()
     {
         // 获取玩家货币系统
-        player_CurrencySystem = GameObject.FindGameObjectWithTag("player").GetComponent<CurrencySystem>();
+        player_CurrencySystem = GameObject.FindGameObjectWithTag("Player").GetComponent<CurrencySystem>();
         if (player_CurrencySystem == null)
         {
             Debug.LogError("出售区容器无法获取玩家货币系统");
@@ -55,8 +55,9 @@ public class SellingButton : MonoBehaviour
         // 交易货币结算
         foreach (ItemPivot itemPivot in sell_ContainerItemManager.itemPivots)
         {
-            player_CurrencySystem.currency_total += itemPivot.itemData.itemPrice;
+            player_CurrencySystem.AddCurrency(itemPivot.itemData.itemPrice);
             sell_ContainerItemManager.RemoveItem(itemPivot);
+            Destroy(itemPivot.gameObject);
         }
     }
     #endregion

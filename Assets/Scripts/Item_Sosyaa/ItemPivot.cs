@@ -15,4 +15,11 @@ public class ItemPivot : MonoBehaviour
     public GameObject containerOfItem;
     [Header("物体锚点所在容器本地坐标")]
     public Vector2 pivotPositionInContainer;
+
+
+    // Test
+    // void Update()
+    // {
+    //     Debug.Log(transform.position);
+    // }
 }
