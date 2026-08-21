@@ -2,6 +2,7 @@
 using UnityEngine.Audio;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.InputSystem;
 
 namespace Settings
 {
@@ -179,9 +180,11 @@ namespace Settings
             //待实现
         }
 
-        public void RebindKey(string action, KeyCode newKey)
+        public bool RebindKey(string action, Key newKey)
         {
-            //待输入系统完善并实现
+            if(KeyManager.Instance==null)
+                return false;
+            return KeyManager.Instance.SetKey(action, newKey);
         }
         
         #endregion

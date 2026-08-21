@@ -7,6 +7,9 @@ public class InventorySlotItem
     public Item itemData;
     public int anchorX;
     public int anchorY;
+    public bool isRotated =false;
+    public int currentWidth => isRotated ? itemData.boundHeight : itemData.boundWidth;
+    public int currentHeight => isRotated ? itemData.boundWidth : itemData.boundHeight;
     public InventorySlotItem(Item itemData, int anchorX, int anchorY)
     {
         this.itemData = itemData;
@@ -15,11 +18,22 @@ public class InventorySlotItem
     }
     public bool ContainsGrid(int gridX, int gridY)
     {
-        bool containsX = gridX >= anchorX && gridX < anchorX + itemData.boundWidth;
-        bool containsY = gridY >= anchorY && gridY < anchorY + itemData.boundHeight;
+        bool containsX = gridX >= anchorX && gridX < anchorX + currentWidth;
+        bool containsY = gridY >= anchorY && gridY < anchorY + currentHeight;
         return containsX && containsY;
     }
     
+    public InventorySlotItem(Item itemData, int anchorX, int anchorY, bool isRotated)
+    {
+        this.itemData = itemData;
+        this.anchorX = anchorX;
+        this.anchorY = anchorY;
+        this.isRotated = isRotated;
+    }
+    public void ToggleRotate()
+    {
+        isRotated = !isRotated;
+    }
 }
 public class Inventory
 {
@@ -46,29 +60,50 @@ public class Inventory
 
     public bool TryPlaceItem(Item item, int anchorX, int anchorY)
     {
-        for(int dx=0;dx<item.boundWidth;dx++)
+        bool can = CanPlaceAt(anchorX, anchorY, item.boundWidth, item.boundHeight);
+        if(!can)
         {
-            for(int dy=0;dy<item.boundHeight;dy++)
-            {
-                int gridX = anchorX + dx;
-                int gridY = anchorY + dy;
-                if(gridX < 0 || gridX >= width || gridY < 0 || gridY >= height)
-                {
-                    return false;
-                }
-                if(GetItemAtGrid(gridX, gridY) != null)
-                {
-                    return false;
-                }
-            }
+            return false;
         }
         InventorySlotItem newSlot = new InventorySlotItem(item, anchorX, anchorY);
+        itemList.Add(newSlot);
+        return true;
+    }
+
+    public bool TryPlaceItem(InventorySlotItem slot, int anchorX, int anchorY)
+    {
+        bool can = CanPlaceAt(anchorX, anchorY, slot.currentWidth, slot.currentHeight);
+        if(!can)
+        {
+            return false;
+        }
+        InventorySlotItem newSlot = new InventorySlotItem(slot.itemData, anchorX, anchorY, slot.isRotated);
         itemList.Add(newSlot);
         return true;
     }
     public bool RemoveItem(InventorySlotItem slot)
     {
         return itemList.Remove(slot);
+    }
+    public bool CanPlaceAt(int anchorX, int anchorY, int occupyW, int occupyH)
+    {
+        for(int dx=0;dx<occupyW;dx++)
+        {
+            for(int dy=0;dy<occupyH;dy++)
+            {
+                int gx = anchorX + dx;
+                int gy = anchorY + dy;
+                if(gx < 0 || gx >= width || gy < 0 || gy >= height)
+                {
+                    return false;
+                }
+                if(GetItemAtGrid(gx, gy) != null)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }
 public class Item

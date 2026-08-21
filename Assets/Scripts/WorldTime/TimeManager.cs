@@ -63,7 +63,7 @@ namespace WorldTime
 
         private void Update()
         {
-            if (!GameFlowManager.Instance.isPlaying)
+            if (!GameFlowManager.Instance.isGameActive)
                 return;
             
             float passedTime = Time.deltaTime * timeMultiplier * timeScale;

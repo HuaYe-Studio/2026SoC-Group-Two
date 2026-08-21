@@ -12,7 +12,8 @@ public class OnCarriageDoor : MonoBehaviour
     public int carriageNum; //当前车厢编号
 
     private Transform playerTrans;
-    [SerializeField] PlayerInputControl playerInputControl;
+    //PlayerInputControl playerInputControl;
+    //修改输入方案
     private BoxCollider doorCollider;
     [SerializeField] bool isRightDoor;
     
@@ -24,18 +25,7 @@ public class OnCarriageDoor : MonoBehaviour
     public UnityEvent<int> OnCarriageChange; //传递要去的车厢编号
     public UnityEvent OnPlayerAwayDoor; //UI显示、对话等
 
-    private void Awake()
-    {
-        try
-        {
-            playerInputControl = InputManager.Instance.Input;
-        }
-        catch
-        {
-             Debug.Log("Find none InputManager.");
-             playerInputControl = new PlayerInputControl();
-        } 
-    }
+    
 
     private void Start()
     {
@@ -44,19 +34,18 @@ public class OnCarriageDoor : MonoBehaviour
     }
 
     #region 按E键触发传送
-    private void OnEnable()
+    
+
+    private void Update()
     {
-        playerInputControl.Enable();
-        playerInputControl.GamePlay.Interact.started += OnInteract;
+        if (Keyboard.current[KeyManager.Instance.player_Interact_key]
+        .wasPressedThisFrame)
+        {
+            OnInteract();
+        }
     }
 
-    private void OnDisable()
-    {
-        playerInputControl.Disable();
-        playerInputControl.GamePlay.Interact.started -= OnInteract;
-    }
-
-    private void OnInteract(InputAction.CallbackContext context)
+    private void OnInteract()
     {
         if (canPress)
         {
