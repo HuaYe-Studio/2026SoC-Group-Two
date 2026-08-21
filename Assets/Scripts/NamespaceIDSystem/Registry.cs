@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
+// 此脚本负责管理物品的注册
 public class Registry : MonoBehaviour
 {
     public static Registry Instance {get; private set;}

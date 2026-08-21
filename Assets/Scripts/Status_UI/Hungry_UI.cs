@@ -14,11 +14,15 @@ public class Hungry_UI : MonoBehaviour
 
     void Start()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         maxHungryValue = StatusManager.Instance.GetStatusModule(StatusType.Hungry).MaxValue;
     }
 
     void Update()
     {
+        if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
+            return;
         // 获取当前饥饿值
         currentHungryValue = StatusManager.Instance.GetStatusModule(StatusType.Hungry).CurrentValue;
 

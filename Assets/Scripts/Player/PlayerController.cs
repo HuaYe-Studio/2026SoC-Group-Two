@@ -1,8 +1,10 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    private PlayerInputControl inputControl;
+    //private PlayerInputControl inputControl;
+    //修改输入方案
     public Vector2 inputDirection;
     [SerializeField]private CharacterController controller;
     [Header("Basic Paraments")]
@@ -15,35 +17,41 @@ public class PlayerController : MonoBehaviour
         
         if(controller==null)
         {
-            Debug.LogError("Find none CharacterController");
+            Debug.Log("Find none CharacterController");
             controller=gameObject.AddComponent<CharacterController>();
         }
-        try
-        {
-            inputControl = InputManager.Instance.Input;
-        }
-        catch
-        {
-            Debug.Log("Find none InputManager.");
-            inputControl = new PlayerInputControl();
-        }
-
+        
     }
 
-    private void OnEnable()
-    {
-        inputControl.Enable();
-    }
-
-    private void OnDisable()
-    {
-        inputControl.Disable();
-    }
 
     private void Update()
     {
-        inputDirection = inputControl.GamePlay.Move.ReadValue<Vector2>();
+        //inputDirection = inputControl.GamePlay.Move.ReadValue<Vector2>();
+        GetKeyboardInput();
         Move();
+    }
+
+    private void GetKeyboardInput()
+    {
+        inputDirection = Vector2.zero;
+
+        if (Keyboard.current[KeyManager.Instance.player_MoveUp_key].isPressed)
+        {
+            inputDirection.y += 1;
+        }
+        if (Keyboard.current[KeyManager.Instance.player_MoveDown_key].isPressed)
+        {
+            inputDirection.y -= 1;
+        }
+        if (Keyboard.current[KeyManager.Instance.player_MoveLeft_key].isPressed)
+        {
+            inputDirection.x -= 1;
+        }
+        if (Keyboard.current[KeyManager.Instance.player_MoveRight_key].isPressed)
+        {
+            inputDirection.x += 1;
+        }
+        inputDirection.Normalize();
     }
 
     private void Move()

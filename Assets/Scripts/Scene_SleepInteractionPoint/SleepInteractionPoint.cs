@@ -16,25 +16,25 @@ public class SleepInteractionPoint : MonoBehaviour
     void Awake()
     {
         // 获取玩家对象
-        player = GameObject.FindGameObjectWithTag("player");
+        player = GameObject.FindGameObjectWithTag("Player");
     }
 
     #region 当玩家靠近可睡眠场景单位
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter(Collider collision)
     {
         if (collision.gameObject == player)
         {
             onPlayerCloseToBed.Invoke();
         }
     }
-    private void OnTriggerStay2D(Collider2D collision)
+    private void OnTriggerStay(Collider collision)
     {
         if (collision.gameObject == player)
         {
             duringPlayerCloseToBed.Invoke();
         }
     }
-    private void OnTriggerExit2D(Collider2D collision)
+    private void OnTriggerExit(Collider collision)
     {
         if (collision.gameObject == player)
         {
