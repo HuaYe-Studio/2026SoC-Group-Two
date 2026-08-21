@@ -14,7 +14,9 @@ public class InventoryUIManager : MonoBehaviour
     public RectTransform rightPanel;
     public GameObject iconPrefab;
     public GameObject cellBgPrefab;
-
+    private InventorySlotItem SelectItem;
+    private Inventory SelectInventory;
+    private int SelectGridX, SelectGridY;
     [Header("格子参数")]
     public float cellSize = 60;
     public float spacing = 5;
@@ -87,8 +89,8 @@ public class InventoryUIManager : MonoBehaviour
             GameObject iconObj = Instantiate(iconPrefab, panel);
             RectTransform rt = iconObj.GetComponent<RectTransform>();
 
-            float totalWidth = slot.itemData.boundWidth * cellSize + (slot.itemData.boundWidth - 1) * spacing;
-            float totalHeight = slot.itemData.boundHeight * cellSize + (slot.itemData.boundHeight - 1) * spacing;
+            float totalWidth = slot.currentWidth * cellSize + (slot.currentWidth - 1) * spacing;
+            float totalHeight = slot.currentHeight * cellSize + (slot.currentHeight - 1) * spacing;
             rt.sizeDelta = new Vector2(totalWidth, totalHeight);
 
             float x = slot.anchorX * (cellSize + spacing);
@@ -123,11 +125,34 @@ public class InventoryUIManager : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            TrySelectItem(leftPanel, currentTrash, mousePos);
+            if (SelectItem == null)
+            {
+                TrySelectItem(rightPanel, externalPlayerBag, mousePos);
+            }
             TryPickItem(leftPanel, currentTrash, mousePos);
             if (dragItem == null)
                 TryPickItem(rightPanel, externalPlayerBag, mousePos);
         }
+        if (Input.GetKeyDown(KeyCode.R) && SelectItem != null)
+        {
+        int curW = SelectItem.currentWidth;
+        int curH = SelectItem.currentHeight;
+        int nextW = curH;
+        int nextH = curW;
 
+        bool canRotate = SelectInventory.CanPlaceAt(SelectItem.anchorX, SelectItem.anchorY, nextW, nextH);
+    
+        if (canRotate)
+        {
+            SelectItem.ToggleRotate();
+            RefreshAll();
+        }
+        else
+        {
+            Debug.Log("此处无法旋转");
+        }
+    }
         if (Input.GetMouseButtonUp(0) && dragItem != null)
         {
             bool placed = false;
@@ -166,6 +191,26 @@ public class InventoryUIManager : MonoBehaviour
         }
     }
 
+void TrySelectItem(RectTransform panel, Inventory inv, Vector2 mouse)
+{
+    if (!PosToGrid(panel, mouse, out int x, out int y)) 
+        return;
+
+    InventorySlotItem slot = inv.GetItemAtGrid(x, y);
+    if (slot != null)
+    {
+        // 选中物品
+        SelectItem = slot;
+        SelectInventory = inv;
+        SelectGridX = x;
+        SelectGridY = y;
+    }
+    else
+    {
+        SelectItem = null;
+        SelectInventory = null;
+    }
+}
     bool TryDropItem(Inventory targetInv, int x, int y)
     {
         if (targetInv == dragSource && x == dragStartX && y == dragStartY)
