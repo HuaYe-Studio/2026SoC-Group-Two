@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Video;
 using WorldTime;
 
 namespace Status
@@ -15,8 +16,8 @@ namespace Status
 
         //这两个到时候也应该被存档
         private Dictionary<StatusType,DateTime> statusLastUpdateMap = new Dictionary<StatusType, DateTime>();
-        private bool isInitialized;
-        
+
+        public event Action<StatusType> OnAnyStatusEmpty;  
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -32,47 +33,56 @@ namespace Status
                 this.enabled = false;
                 return;
             }
-            
-            InitializeStatusFromConfig();
         }
         private void Start()
         {
             if (TimeManager.Instance != null)
             {
-                if (!isInitialized)
-                {
-                    foreach (var config in statusSettings.InitialStatusConfigs)
-                    {
-                        statusLastUpdateMap[config.statusType] = TimeManager.Instance.CurrentTime;
-                    }
-                    isInitialized = true;
-                }
                 TimeManager.Instance.OnMinuteChanged += OnTimeChanged;
-            }
-            else
-            {
-                Debug.LogWarning("StatusManager is missing");
             }
         }
 
         private void OnDestroy()
         {
-            TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
+            if (TimeManager.Instance != null)
+            {
+                TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
+            }
+            
+            if(Instance == this)
+            {
+                Instance = null;
+            }
         }
-        private void InitializeStatusFromConfig()
+        
+        public void InitializeStatusFromConfig()
         {
             if (statusSettings == null)
                 return;
 
+            statusMap.Clear();
+            statusLastUpdateMap.Clear();
+            
             foreach (var config in statusSettings.InitialStatusConfigs)
             {
+                statusLastUpdateMap.TryAdd(config.statusType, TimeManager.Instance.CurrentTime);
+                
                 var newModule =new StatusModule(config.statusType,config.defaultValue,config.defaultMax,config.defaultMin);
-                statusMap.Add(config.statusType,newModule);
+                statusMap.TryAdd(config.statusType, newModule);
+
+                newModule.OnStatusMin += () =>
+                {
+                    Debug.Log($"{config.statusType}已归零，广播之");
+                    OnAnyStatusEmpty?.Invoke(config.statusType);
+                };
             }
         }
 
         private void OnTimeChanged(DateTime currentTime)
         {
+            if (!GameFlowManager.Instance.isPlaying)
+                return;
+            
             foreach (var config in statusSettings.InitialStatusConfigs)
             {
                 TimeSpan interval = TimeSpan.FromMinutes(config.intervalMinute);

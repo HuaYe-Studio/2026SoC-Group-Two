@@ -4,14 +4,30 @@ public class PlayerController : MonoBehaviour
 {
     private PlayerInputControl inputControl;
     public Vector2 inputDirection;
-    private CharacterController controller;
+    [SerializeField]private CharacterController controller;
     [Header("Basic Paraments")]
     public float moveSpeed;
+    public float gravity=-9.8f;
+    private Vector3 velocity;
 
     private void Awake()
     {
-        controller=GetComponent<CharacterController>();
-        inputControl = new PlayerInputControl();
+        
+        if(controller==null)
+        {
+            Debug.LogError("Find none CharacterController");
+            controller=gameObject.AddComponent<CharacterController>();
+        }
+        try
+        {
+            inputControl = InputManager.Instance.Input;
+        }
+        catch
+        {
+            Debug.Log("Find none InputManager.");
+            inputControl = new PlayerInputControl();
+        }
+
     }
 
     private void OnEnable()
@@ -32,15 +48,16 @@ public class PlayerController : MonoBehaviour
 
     private void Move()
     {
-        //翻转
-        int faceDir = (int)transform.localScale.x;
-        if(inputDirection.x>0.1)
-            faceDir=1;
-        if(inputDirection.x<-0.1)
-            faceDir=-1;
-        transform.localScale = new Vector3(faceDir, 1, 1);
         //移动
-        Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y);
+        Vector3 movement = new Vector3(inputDirection.x, 0, inputDirection.y).normalized;
         controller.Move(movement * (moveSpeed * Time.deltaTime));
+        //重力
+        if (controller.isGrounded&&velocity.y<0)
+        {
+            velocity.y = -0.2f;
+        }
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+       
     }
 }
