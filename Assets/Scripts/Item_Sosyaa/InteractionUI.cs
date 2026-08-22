@@ -30,4 +30,10 @@ public class InteractionUI : MonoBehaviour
         gameObject.SetActive(false);
     }
     #endregion
+
+    // 默认不激活
+    void Awake()
+    {
+        gameObject.SetActive(false);
+    }
 }

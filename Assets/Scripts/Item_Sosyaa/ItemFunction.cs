@@ -70,7 +70,7 @@ public class ItemFunction : MonoBehaviour , IPointerClickHandler
             itemPivot.containerOfItem.GetComponent<Container_ItemManager>().RemoveItem(itemPivot);
 
         }
-        Destroy(gameObject);
+        Destroy(gameObject.transform.parent.gameObject);
     }
     #endregion
 }
