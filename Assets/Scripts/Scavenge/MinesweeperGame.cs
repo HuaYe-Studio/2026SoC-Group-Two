@@ -15,8 +15,8 @@ namespace Scavenge
         public int mineCount = 12;
 
         [Header("物品")]
-        [Tooltip("可能出现的物品池")]
-        public List<Item> itemCandidates = new List<Item>();
+        [Tooltip("可能出现的物品池（用 ItemDef 资产配置）")]
+        public List<ItemDef> itemDefCandidates = new List<ItemDef>();
         [Tooltip("布置的物品数量")]
         public int itemCount = 2;
 
@@ -57,6 +57,7 @@ namespace Scavenge
         private Button[,] cellButtons;
         private Text[,] cellNumberTexts;
         private readonly List<PlacedItem> placedItems = new List<PlacedItem>();
+        private readonly List<Item> itemPool = new List<Item>();
 
         private bool boardGenerated;
         private float energy;
@@ -79,6 +80,7 @@ namespace Scavenge
                 for (int x = 0; x < cols; x++)
                     itemIndexAt[y, x] = -1;
             placedItems.Clear();
+            BuildItemPool();
             energy = initialEnergy;
             revealedNonMineCount = 0;
             totalNonMineCount = 0;
@@ -129,6 +131,17 @@ namespace Scavenge
             hintRt.anchorMin = hintRt.anchorMax = new Vector2(0.5f, 0f);
             hintRt.sizeDelta = new Vector2(boardW, 28f);
             hintRt.anchoredPosition = new Vector2(0f, pad + 6f);
+        }
+
+        private void BuildItemPool()
+        {
+            itemPool.Clear();
+            foreach (ItemDef def in itemDefCandidates)
+                if (def != null)
+                    itemPool.Add(def.ToItem());
+
+            if (itemCount > 0 && itemPool.Count == 0)
+                Debug.LogWarning("[Scavenge] 本局没有物品");
         }
 
         private Button CreateCellButton(int x, int y)
@@ -290,12 +303,12 @@ namespace Scavenge
             }
 
             int placedCount = 0;
-            for (int i = 0; i < itemCount && itemCandidates.Count > 0; i++)
+            for (int i = 0; i < itemCount && itemPool.Count > 0; i++)
             {
                 bool ok = false;
                 for (int attempt = 0; attempt < 60 && !ok; attempt++)
                 {
-                    Item def = itemCandidates[Random.Range(0, itemCandidates.Count)];
+                    Item def = itemPool[Random.Range(0, itemPool.Count)];
                     int w = def.boundWidth, h = def.boundHeight;
                     if (w <= 0 || h <= 0 || w > cols || h > rows) continue;
 

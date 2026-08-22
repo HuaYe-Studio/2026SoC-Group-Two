@@ -12,9 +12,9 @@ namespace Scavenge
         public KeyCode interactKey = KeyCode.E;
         [Tooltip("互动距离")]
         public float interactRange = 3f;
-        [Tooltip("拾荒键随机出现检查间隔(秒)")]
+        [Tooltip("拾荒键随机")]
         public float spawnInterval = 30f;
-        [Tooltip("每次检查时出现的概率(0~1)")]
+        [Tooltip("出现的概率")]
         [Range(0f, 1f)] public float spawnChance = 0.5f;
 
         [Header("拾荒键光提示")]
@@ -34,6 +34,12 @@ namespace Scavenge
         [Header("刷新周期")]
         [Tooltip("已被拾荒过的容器。\n用天数变化当作存档时机")]
         public bool refreshOnDayChanged = true;
+
+        [Header("常驻模式")]
+        [Tooltip("常驻模式：跳过随机刷新/黄光/每日锁定，始终可交互")]
+        public bool alwaysAvailable = false;
+        [Tooltip("互动提示文案模板，{0} 会被替换成按键名")]
+        public string interactHintFormat = "按 {0} 拾荒";
 
         [HideInInspector] public Inventory containerInv;
 
@@ -59,15 +65,17 @@ namespace Scavenge
             CreateKeyLight();
             CreateHintUI();
             ScavengeSaveEvents.OnWorldSaved += OnWorldSaved;
+            if (alwaysAvailable)
+                SetKeyActive(true);
         }
 
         void Start()
         {
 
-            if (refreshOnDayChanged && TimeManager.Instance != null)
+            if (!alwaysAvailable && refreshOnDayChanged && TimeManager.Instance != null)
                 TimeManager.Instance.OnDayChanged += OnDayChangedStandIn;
 
-            ScavengePlayerBag.EnsureWired(); // 提前接好场景背包，容器UI随时显示真实玩家背包
+            ScavengePlayerBag.EnsureWired(); 
         }
 
         void OnDestroy()
@@ -80,6 +88,8 @@ namespace Scavenge
        
         private void OnWorldSaved()
         {
+            if (alwaysAvailable) return;
+
             scavengedThisCycle = false;
             nextRollTime = Time.time + Random.Range(0f, spawnInterval);
         }
@@ -93,7 +103,7 @@ namespace Scavenge
         {
             FindPlayer();
 
-            if (!keyActive && !gameRunning && !scavengedThisCycle && Time.time >= nextRollTime)
+            if (!alwaysAvailable && !keyActive && !gameRunning && !scavengedThisCycle && Time.time >= nextRollTime)
             {
                 nextRollTime = Time.time + spawnInterval;
                 if (Random.value < spawnChance)
@@ -103,7 +113,7 @@ namespace Scavenge
             if (keyActive && player != null)
             {
                 bool inRange = Vector3.Distance(transform.position, player.position) <= interactRange;
-                SetHintVisible(inRange);
+                SetHintVisible(inRange && !gameRunning);
                 if (inRange && Input.GetKeyDown(interactKey))
                     StartGame();
             }
@@ -117,8 +127,6 @@ namespace Scavenge
 
             SyncBackpackWithContainer();
         }
-
-        /// <summary>轮询容器窗口开关触发背包双向同步（开：场景→数据；关：数据→场景）</summary>
         private void SyncBackpackWithContainer()
         {
             var uiMgr = InventoryUIManager.Instance;
@@ -137,7 +145,7 @@ namespace Scavenge
         private void SetKeyActive(bool active)
         {
             keyActive = active;
-            keyLight.enabled = active;
+            keyLight.enabled = active && !alwaysAvailable;
             if (!active)
                 SetHintVisible(false);
         }
@@ -168,9 +176,9 @@ namespace Scavenge
 
             var rt = (RectTransform)go.transform;
             rt.sizeDelta = new Vector2(300f, 50f);
-            go.transform.localScale = Vector3.one * 0.01f; // 300*0.01 = 3世界单位宽
+            go.transform.localScale = Vector3.one * 0.01f; 
 
-            hintLabel = ScavengeUI.CreateText(go.transform, "Label", $"按 {interactKey} 拾荒",
+            hintLabel = ScavengeUI.CreateText(go.transform, "Label", string.Format(interactHintFormat, interactKey),
                 Color.white, 30, TextAnchor.MiddleCenter);
             ScavengeUI.AddOutline(hintLabel);
             go.SetActive(false);
@@ -195,7 +203,8 @@ namespace Scavenge
                 return;
             }
 
-            SetKeyActive(false);
+            if (!alwaysAvailable)
+                SetKeyActive(false);
             gameRunning = true;
 
             game.OnSettled -= OnGameSettled;
@@ -207,7 +216,9 @@ namespace Scavenge
         private void OnGameSettled(List<Item> obtainedItems, bool completed)
         {
             gameRunning = false;
-           
+            if (alwaysAvailable)
+                SetKeyActive(true);
+
             scavengedThisCycle = true;
 
             containerInv.itemList.Clear();
