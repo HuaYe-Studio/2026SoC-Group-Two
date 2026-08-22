@@ -9,17 +9,17 @@ namespace Scavenge
         public bool HasBackpackSystem => creator != null;
         public Inventory Data { get; private set; }
 
-        private BackpackCreator creator;
+        private ContainerCreator creator;
         private Canvas backpackCanvas;
         private readonly Dictionary<InventorySlotItem, GameObject> slotToGo =
             new Dictionary<InventorySlotItem, GameObject>();
 
         public BackpackSystemAdapter()
         {
-            creator = Object.FindObjectOfType<BackpackCreator>();
+            creator = Object.FindObjectOfType<ContainerCreator>();
             if (creator == null)
             {
-                Debug.LogWarning("[Scavenge] 没有找到 BackpackCreator");
+                Debug.LogWarning("[Scavenge] 没有找到 ContainerCreator");
                 return;
             }
             backpackCanvas = creator.GetComponentInParent<Canvas>();
@@ -32,19 +32,11 @@ namespace Scavenge
             Data.itemList.Clear();
             slotToGo.Clear();
 
-            foreach (ItemMeshDetection det in Object.FindObjectsOfType<ItemMeshDetection>())
+            foreach (PlacedEntry p in CollectPlacedItems())
             {
-                if (det == null || det.usingBackpackMeshes == null || det.usingBackpackMeshes.Length == 0)
-                    continue;
-                GameObject go = det.parentItem != null ? det.parentItem : det.gameObject;
-                if (go == null || !BelongsToThisBackpack(det)) continue;
-
-                ItemInfo info = ReadPlacedItem(det, go);
-                if (info == null) continue;
-
-                InventorySlotItem slot = new InventorySlotItem(info.item, info.anchorX, info.anchorY, info.rotated);
+                InventorySlotItem slot = new InventorySlotItem(p.item, p.anchorX, p.anchorY);
                 Data.itemList.Add(slot);
-                slotToGo[slot] = go;
+                slotToGo[slot] = p.go;
             }
         }
 
@@ -87,7 +79,7 @@ namespace Scavenge
 
             if (slotToGo.TryGetValue(slot, out GameObject go) && go != null)
             {
-                FreeAndDestroy(go);
+                DestroySlotGo(go);
             }
             else
             {
@@ -107,46 +99,95 @@ namespace Scavenge
             return true;
         }
 
-
         private struct PlacedEntry
         {
             public GameObject go;
+            public ItemPivot pivot;
             public ItemMeshDetection det;
+            public Item item;
             public int anchorX, anchorY, width, height;
         }
 
-        private class ItemInfo
+        /// <summary>收集背包里已放置的物品：优先走 Container_ItemManager 的 ItemPivot 登记，回退扫描 ItemMeshDetection</summary>
+        private List<PlacedEntry> CollectPlacedItems()
         {
-            public Item item;
-            public int anchorX, anchorY;
-            public bool rotated;
-        }
+            List<PlacedEntry> result = new List<PlacedEntry>();
+            HashSet<GameObject> seen = new HashSet<GameObject>();
 
-        private bool BelongsToThisBackpack(ItemMeshDetection det)
-        {
-            foreach (GameObject m in det.usingBackpackMeshes)
+            var itemMgr = creator != null ? creator.GetComponent<Container_ItemManager>() : null;
+            if (itemMgr != null)
             {
-                BackpackMesh bm = m != null ? m.GetComponent<BackpackMesh>() : null;
-                if (bm != null && bm.backpackCreator == creator) return true;
+                foreach (ItemPivot pivot in itemMgr.itemPivots)
+                {
+                    if (pivot == null || pivot.itemMeshPositions == null || pivot.itemMeshPositions.Count == 0) continue;
+                    PlacedEntry entry = ReadPivot(pivot);
+                    if (entry.go == null) continue;
+                    seen.Add(pivot.gameObject);
+                    result.Add(entry);
+                }
             }
-            return false;
+
+            foreach (ItemMeshDetection det in Object.FindObjectsOfType<ItemMeshDetection>())
+            {
+                if (det == null) continue;
+                GameObject go = det.parentItem != null ? det.parentItem : det.gameObject;
+                if (go == null || seen.Contains(go)) continue;
+                if (!BelongsToThisContainer(det)) continue;
+
+                PlacedEntry entry = ReadDetection(det, go);
+                if (entry.go == null) continue;
+                seen.Add(go);
+                result.Add(entry);
+            }
+
+            return result;
         }
 
-        private ItemInfo ReadPlacedItem(ItemMeshDetection det, GameObject go)
+        private PlacedEntry ReadPivot(ItemPivot pivot)
+        {
+            int w = 1, h = 1;
+            foreach (Vector2 pos in pivot.itemMeshPositions)
+            {
+                w = Mathf.Max(w, Mathf.RoundToInt(pos.x) + 1);
+                h = Mathf.Max(h, Mathf.RoundToInt(-pos.y) + 1);
+            }
+
+            Sprite icon = pivot.itemImage != null ? pivot.itemImage.sprite : null;
+            Item item = new Item
+            {
+                itemName = pivot.gameObject.name,
+                icon = icon,
+                boundWidth = w,
+                boundHeight = h
+            };
+
+            return new PlacedEntry
+            {
+                go = pivot.gameObject,
+                pivot = pivot,
+                item = item,
+                anchorX = Mathf.RoundToInt(pivot.pivotPositionInContainer.x),
+                anchorY = Mathf.RoundToInt(-pivot.pivotPositionInContainer.y),
+                width = w,
+                height = h
+            };
+        }
+
+        private PlacedEntry ReadDetection(ItemMeshDetection det, GameObject go)
         {
             Vector3 rootPos = det.parentItem != null ? det.parentItem.transform.position : det.transform.position;
 
-            BackpackMesh pivotMesh = null;
+            ContainerMesh pivotMesh = null;
             float best = float.MaxValue;
-            foreach (GameObject gm in creator.backpackMeshes)
+            foreach (GameObject gm in creator.containerMeshes)
             {
                 if (gm == null) continue;
-                BackpackMesh bm = gm.GetComponent<BackpackMesh>();
-                if (bm == null) continue;
+                ContainerMesh cm = gm.GetComponent<ContainerMesh>();
+                if (cm == null) continue;
                 float d = Vector3.Distance(gm.transform.position, rootPos);
-                if (d < best) { best = d; pivotMesh = bm; }
+                if (d < best) { best = d; pivotMesh = cm; }
             }
-            if (pivotMesh == null) return null;
+            if (pivotMesh == null) return new PlacedEntry();
 
             int anchorX = Mathf.RoundToInt(pivotMesh.meshPos.x);
             int anchorY = Mathf.RoundToInt(-pivotMesh.meshPos.y);
@@ -157,7 +198,7 @@ namespace Scavenge
             int w, h;
             if (ic != null && ic.meshNumber_Hor > 0 && ic.meshNumber_Ver > 0)
             {
-                w = ic.meshNumber_Hor; 
+                w = ic.meshNumber_Hor;
                 h = ic.meshNumber_Ver;
             }
             else
@@ -180,32 +221,28 @@ namespace Scavenge
                 boundWidth = w,
                 boundHeight = h
             };
-            return new ItemInfo { item = item, anchorX = anchorX, anchorY = anchorY, rotated = rotated };
+
+            return new PlacedEntry
+            {
+                go = go,
+                det = det,
+                item = item,
+                anchorX = anchorX,
+                anchorY = anchorY,
+                width = rotated ? h : w,
+                height = rotated ? w : h
+            };
         }
 
-        private List<PlacedEntry> CollectPlacedItems()
+        private bool BelongsToThisContainer(ItemMeshDetection det)
         {
-            List<PlacedEntry> result = new List<PlacedEntry>();
-            foreach (ItemMeshDetection det in Object.FindObjectsOfType<ItemMeshDetection>())
+            if (det.usingContainerMeshes == null) return false;
+            foreach (GameObject m in det.usingContainerMeshes)
             {
-                if (det == null || det.usingBackpackMeshes == null || det.usingBackpackMeshes.Length == 0)
-                    continue;
-                GameObject go = det.parentItem != null ? det.parentItem : det.gameObject;
-                if (go == null || !BelongsToThisBackpack(det)) continue;
-
-                ItemInfo info = ReadPlacedItem(det, go);
-                if (info == null) continue;
-                result.Add(new PlacedEntry
-                {
-                    go = go,
-                    det = det,
-                    anchorX = info.anchorX,
-                    anchorY = info.anchorY,
-                    width = info.rotated ? info.item.boundHeight : info.item.boundWidth,
-                    height = info.rotated ? info.item.boundWidth : info.item.boundHeight
-                });
+                ContainerMesh cm = m != null ? m.GetComponent<ContainerMesh>() : null;
+                if (cm != null && cm.containerCreator == creator) return true;
             }
-            return result;
+            return false;
         }
 
         private bool DataHas(PlacedEntry p)
@@ -222,19 +259,16 @@ namespace Scavenge
         private GameObject CreateItemGO(InventorySlotItem slot)
         {
             Item item = slot.itemData;
-            bool rotated = slot.isRotated;
-            int w = slot.CurrentWidth;  
-            int h = slot.CurrentHeight; 
+            int w = slot.CurrentWidth;
+            int h = slot.CurrentHeight;
 
             GameObject go = new GameObject(item.itemName);
-            RectTransform goRt = go.AddComponent<RectTransform>();
-            go.transform.SetParent(creator.backpackMeshPivotObj.transform.parent, false);
+            go.AddComponent<RectTransform>();
+            go.transform.SetParent(creator.containerMeshPivotObj.transform.parent, false);
 
-            Vector3 anchorPos = creator.backpackMeshPivotObj.transform.position
+            Vector3 anchorPos = creator.containerMeshPivotObj.transform.position
                 + new Vector3(slot.anchorX * creator.meshWidth, -slot.anchorY * creator.meshHeight, 0f);
             go.transform.position = anchorPos;
-            if (rotated)
-                go.transform.localEulerAngles = new Vector3(0f, 0f, -90f);
 
             GameObject imgGO = new GameObject("Icon", typeof(RectTransform));
             imgGO.transform.SetParent(go.transform, false);
@@ -247,12 +281,12 @@ namespace Scavenge
             imgRt.sizeDelta = new Vector2(w * creator.meshWidth, h * creator.meshHeight);
 
             ItemMeshCreator ic = go.AddComponent<ItemMeshCreator>();
-            ic.backpackCreator = creator;
+            ic.containerCreator = creator;
             ic.itemMeshPrefab = creator.singleMeshPrefab;
             ic.itemImage = img;
             ic.itemMeshWidth = creator.meshWidth;
             ic.itemMeshHeight = creator.meshHeight;
-            ic.meshNumber_Hor = item.boundWidth; 
+            ic.meshNumber_Hor = item.boundWidth;
             ic.meshNumber_Ver = item.boundHeight;
 
             List<GameObject> occupied = new List<GameObject>();
@@ -270,70 +304,104 @@ namespace Scavenge
                     mesh.itemMeshPrefab = creator.singleMeshPrefab;
                     ic.itemMeshes.Add(m);
 
-                    BackpackMesh bm = FindBackpackMeshAt(slot.anchorX + gx, slot.anchorY + gy);
-                    if (bm != null)
+                    ContainerMesh cm = FindContainerMeshAt(slot.anchorX + gx, slot.anchorY + gy);
+                    if (cm != null)
                     {
-                        bm.isMeshUsed = true;
-                        occupied.Add(bm.gameObject);
+                        cm.isMeshUsed = true;
+                        occupied.Add(cm.gameObject);
                     }
                 }
             }
 
-            if (BackpackMeshTagDefined())
+            ItemPivot pivot = go.AddComponent<ItemPivot>();
+            pivot.itemImage = img;
+            foreach (GameObject m in ic.itemMeshes)
+                pivot.itemMeshPositions.Add(m.GetComponent<ItemMesh>().itemMeshPos);
+
+            if (ContainerMeshTagDefined())
             {
                 ItemMeshDetection det = imgGO.AddComponent<ItemMeshDetection>();
                 det.canvas = backpackCanvas;
                 det.parentItem = go;
-                det.itemImage = img;
                 det.detectDistance = creator.meshWidth;
-                det.rotate_KeyCode = KeyCode.R;
-                det.usingBackpackMeshes = occupied.ToArray();
+                det.usingContainerMeshes = occupied.ToArray();
+                imgGO.AddComponent<ItemMeshImageDrag>();
             }
             else
             {
-                Debug.LogWarning("[Scavenge] 未定义 backpackmesh tag");
+                Debug.LogWarning("[Scavenge] 未定义 containermesh 或 backpackmesh 标签");
             }
+
+            var itemMgr = creator.GetComponent<Container_ItemManager>();
+            if (itemMgr != null)
+                itemMgr.AddItem(pivot, new Vector2(slot.anchorX, -slot.anchorY));
 
             return go;
         }
 
-        private BackpackMesh FindBackpackMeshAt(int gridX, int gridY)
+        private ContainerMesh FindContainerMeshAt(int gridX, int gridY)
         {
-            foreach (GameObject gm in creator.backpackMeshes)
+            foreach (GameObject gm in creator.containerMeshes)
             {
-                BackpackMesh bm = gm != null ? gm.GetComponent<BackpackMesh>() : null;
-                if (bm == null) continue;
-                if (Mathf.RoundToInt(bm.meshPos.x) == gridX && Mathf.RoundToInt(-bm.meshPos.y) == gridY)
-                    return bm;
+                ContainerMesh cm = gm != null ? gm.GetComponent<ContainerMesh>() : null;
+                if (cm == null) continue;
+                if (Mathf.RoundToInt(cm.meshPos.x) == gridX && Mathf.RoundToInt(-cm.meshPos.y) == gridY)
+                    return cm;
             }
             return null;
         }
 
         private void DestroyPlacedItem(PlacedEntry p)
         {
-            if (p.det != null && p.det.usingBackpackMeshes != null)
+            if (p.pivot != null)
             {
-                foreach (GameObject m in p.det.usingBackpackMeshes)
-                {
-                    BackpackMesh bm = m != null ? m.GetComponent<BackpackMesh>() : null;
-                    if (bm != null) bm.isMeshUsed = false;
-                }
+                var itemMgr = creator.GetComponent<Container_ItemManager>();
+                if (itemMgr != null)
+                    itemMgr.RemoveItem(p.pivot);
+                else
+                    FreePivotMeshes(p.pivot);
+            }
+            else if (p.det != null)
+            {
+                FreeDetMeshes(p.det);
             }
             Object.Destroy(p.go);
         }
 
-        private void FreeAndDestroy(GameObject go)
+        private void DestroySlotGo(GameObject go)
         {
-            ItemMeshDetection det = go.GetComponentInChildren<ItemMeshDetection>();
-            if (det != null && det.usingBackpackMeshes != null)
+            var itemMgr = creator.GetComponent<Container_ItemManager>();
+            ItemPivot pivot = go.GetComponent<ItemPivot>();
+            if (pivot != null && itemMgr != null)
             {
-                foreach (GameObject m in det.usingBackpackMeshes)
-                {
-                    BackpackMesh bm = m != null ? m.GetComponent<BackpackMesh>() : null;
-                    if (bm != null) bm.isMeshUsed = false;
-                }
+                itemMgr.RemoveItem(pivot);
+                Object.Destroy(go);
+                return;
             }
+
+            ItemMeshDetection det = go.GetComponentInChildren<ItemMeshDetection>();
+            FreeDetMeshes(det);
             Object.Destroy(go);
+        }
+
+        private static void FreePivotMeshes(ItemPivot pivot)
+        {
+            foreach (ContainerMesh cm in Object.FindObjectsOfType<ContainerMesh>())
+            {
+                if (cm == null) continue;
+                if (pivot.itemMeshPositions.Contains(cm.meshPos - pivot.pivotPositionInContainer))
+                    cm.isMeshUsed = false;
+            }
+        }
+
+        private static void FreeDetMeshes(ItemMeshDetection det)
+        {
+            if (det == null || det.usingContainerMeshes == null) return;
+            foreach (GameObject m in det.usingContainerMeshes)
+            {
+                ContainerMesh cm = m != null ? m.GetComponent<ContainerMesh>() : null;
+                if (cm != null) cm.isMeshUsed = false;
+            }
         }
 
         private static float NormalizeEulerZ(float z)
@@ -345,18 +413,26 @@ namespace Scavenge
         }
 
         private static bool? backpackMeshTagDefined;
-        private static bool BackpackMeshTagDefined()
+        private static bool ContainerMeshTagDefined()
         {
             if (backpackMeshTagDefined == null)
             {
                 try
                 {
-                    GameObject.FindGameObjectsWithTag("backpackmesh");
+                    GameObject.FindGameObjectsWithTag("containermesh");
                     backpackMeshTagDefined = true;
                 }
                 catch (System.Exception)
                 {
-                    backpackMeshTagDefined = false;
+                    try
+                    {
+                        GameObject.FindGameObjectsWithTag("backpackmesh");
+                        backpackMeshTagDefined = true;
+                    }
+                    catch (System.Exception)
+                    {
+                        backpackMeshTagDefined = false;
+                    }
                 }
             }
             return backpackMeshTagDefined.Value;
