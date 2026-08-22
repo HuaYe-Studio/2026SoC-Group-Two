@@ -30,10 +30,10 @@ public class GameFlowManager : MonoBehaviour
     
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            QuitGame();
-        }
+        //if (Input.GetKeyDown(KeyCode.Escape))
+        //{
+        //    QuitGame();
+        //}
     }
     private void OnDestroy()
     {
@@ -137,6 +137,7 @@ public class GameFlowManager : MonoBehaviour
         if (pauseLocks.Add(pauseReason))
         {
             Debug.Log($"游戏因为{pauseReason}申请已暂停");
+            Time.timeScale = 0f; // 暂停游戏时间
         }
     }
     
@@ -145,6 +146,7 @@ public class GameFlowManager : MonoBehaviour
         if (pauseLocks.Remove(pauseReason))
         {
             Debug.Log($"游戏已经解锁因为{pauseReason}申请的暂停");
+            Time.timeScale = 1f;// 恢复游戏时间
         }
     }
 }
