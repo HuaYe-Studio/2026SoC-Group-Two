@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Video;
 using WorldTime;
+using NPC;
 
 namespace Status
 {
@@ -15,8 +17,8 @@ namespace Status
 
         //这两个到时候也应该被存档
         private Dictionary<StatusType,DateTime> statusLastUpdateMap = new Dictionary<StatusType, DateTime>();
-        private bool isInitialized;
-        
+
+        public event Action<StatusType> OnAnyStatusEmpty;  
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -32,47 +34,61 @@ namespace Status
                 this.enabled = false;
                 return;
             }
-            
-            InitializeStatusFromConfig();
         }
         private void Start()
         {
             if (TimeManager.Instance != null)
             {
-                if (!isInitialized)
-                {
-                    foreach (var config in statusSettings.InitialStatusConfigs)
-                    {
-                        statusLastUpdateMap[config.statusType] = TimeManager.Instance.CurrentTime;
-                    }
-                    isInitialized = true;
-                }
                 TimeManager.Instance.OnMinuteChanged += OnTimeChanged;
             }
-            else
-            {
-                Debug.LogWarning("StatusManager is missing");
-            }
+
+            DialogueEvents.OnRaised -= OnDialogueEvent;
+            DialogueEvents.OnRaised += OnDialogueEvent;
         }
 
         private void OnDestroy()
         {
-            TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
+            if (TimeManager.Instance != null)
+            {
+                TimeManager.Instance.OnMinuteChanged -= OnTimeChanged;
+            }
+            
+            DialogueEvents.OnRaised -= OnDialogueEvent;
+            
+            if(Instance == this)
+            {
+                Instance = null;
+            }
         }
-        private void InitializeStatusFromConfig()
+        
+        public void InitializeStatusFromConfig()
         {
             if (statusSettings == null)
                 return;
 
+            statusMap.Clear();
+            statusLastUpdateMap.Clear();
+            
             foreach (var config in statusSettings.InitialStatusConfigs)
             {
+                statusLastUpdateMap.TryAdd(config.statusType, TimeManager.Instance.CurrentTime);
+                
                 var newModule =new StatusModule(config.statusType,config.defaultValue,config.defaultMax,config.defaultMin);
-                statusMap.Add(config.statusType,newModule);
+                statusMap.TryAdd(config.statusType, newModule);
+
+                newModule.OnStatusMin += () =>
+                {
+                    Debug.Log($"{config.statusType}已归零，广播之");
+                    OnAnyStatusEmpty?.Invoke(config.statusType);
+                };
             }
         }
 
         private void OnTimeChanged(DateTime currentTime)
         {
+            if (!GameFlowManager.Instance.isGameActive)
+                return;
+            
             foreach (var config in statusSettings.InitialStatusConfigs)
             {
                 TimeSpan interval = TimeSpan.FromMinutes(config.intervalMinute);
@@ -111,6 +127,16 @@ namespace Status
             }
             return false;
         }
+
+        public float GetStatusValue(StatusType statusType)
+        {
+            if (statusMap.TryGetValue(statusType, out StatusModule module))
+            {
+                return module.CurrentValue;
+            }
+            
+            return -1;
+        }
         
         public void ChangeStatusValue(StatusType statusType, float amount)
         {
@@ -124,6 +150,20 @@ namespace Status
         {
             statusMap.TryGetValue(statusType, out StatusModule module);
             return module;
+        }
+
+        private void OnDialogueEvent(string id, object data)
+        {
+            if (id != "status.change") return;
+            
+            if (data is (StatusType type, float changeAmount))
+            {
+                ChangeStatusValue(type, changeAmount);
+            }
+            else
+            {
+                Debug.Log("收到 Status_Change 事件，但携带的数据不是预期的元组");
+            }
         }
     }
 }
