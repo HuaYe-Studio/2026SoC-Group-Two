@@ -96,6 +96,33 @@ public class SettingUIPanels : MonoBehaviour
             RefreshUI();
         }
 
+        private void OnDisable()
+        {
+            SettingManager.Instance.SetMasterVolume(originalMasterVolume);
+            SettingManager.Instance.SetMusicVolume(originalMusicVolume);
+            SettingManager.Instance.SetSfxVolume(originalSfxVolume);
+        }
+
+        public void OpenPanel()
+        {
+            if (gameObject.activeSelf) 
+                return;
+            GameFlowManager.Instance?.PauseGameplay("Settings");
+            RefreshUI();
+            gameObject.SetActive(true);
+        }
+        public void Close()
+        {
+            if (!gameObject.activeSelf) return;
+            GameFlowManager.Instance?.ResumeGameplay("Settings");
+            
+            SettingManager.Instance.SetMasterVolume(originalMasterVolume);
+            SettingManager.Instance.SetMusicVolume(originalMusicVolume);
+            SettingManager.Instance.SetSfxVolume(originalSfxVolume);
+            
+            gameObject.SetActive(false);
+        }
+        
         private void RefreshUI()
         {
             if (SettingManager.Instance == null)
