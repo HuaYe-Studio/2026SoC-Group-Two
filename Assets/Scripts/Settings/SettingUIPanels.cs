@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Settings;
 using TMPro;
 using UnityEngine.Events;
+using UI;
 
 public class SettingUIPanels : MonoBehaviour
     {
@@ -83,13 +84,8 @@ public class SettingUIPanels : MonoBehaviour
 
         private void OnCloseClicked()
         {
-            SettingManager.Instance.SetMasterVolume(originalMasterVolume);
-            SettingManager.Instance.SetMusicVolume(originalMusicVolume);
-            SettingManager.Instance.SetSfxVolume(originalSfxVolume);
-            
-            gameObject.SetActive(false);
-            OnCloseButtonClicked?.Invoke();
-    }
+            CloseSettingPanel();
+        }
 
         //之后UIManager需要做一个防止重复打开的拦截
         private void OnEnable()
@@ -108,24 +104,23 @@ public class SettingUIPanels : MonoBehaviour
             SettingManager.Instance.SetSfxVolume(originalSfxVolume);
         }
 
-        public void OpenPanel()
+        public void OpenSettingPanel()
         {
             if (gameObject.activeSelf) 
                 return;
             GameFlowManager.Instance?.PauseGameplay("Settings");
             RefreshUI();
             gameObject.SetActive(true);
+            UIManager.Instance.OpenUI(gameObject); 
         }
-        public void Close()
+        public void CloseSettingPanel()
         {
             if (!gameObject.activeSelf) return;
             GameFlowManager.Instance?.ResumeGameplay("Settings");
             
-            SettingManager.Instance.SetMasterVolume(originalMasterVolume);
-            SettingManager.Instance.SetMusicVolume(originalMusicVolume);
-            SettingManager.Instance.SetSfxVolume(originalSfxVolume);
-            
             gameObject.SetActive(false);
+            UIManager.Instance.CloseUI(gameObject); 
+            OnCloseButtonClicked?.Invoke();
         }
         
         private void RefreshUI()

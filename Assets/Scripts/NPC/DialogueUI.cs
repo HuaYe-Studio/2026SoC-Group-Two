@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Serialization;
+using UI;
 
 namespace NPC
 {
@@ -73,7 +74,10 @@ namespace NPC
         private void HandleDialogueStart()
         {
             if (dialoguePanel != null)
+            {
                 dialoguePanel.SetActive(true);
+                UIManager.Instance.OpenUI(dialoguePanel);
+            }
             ClearOptions();
         }
 
@@ -128,8 +132,11 @@ namespace NPC
 
         private void HandleDialogueEnd()
         {
-            if(dialoguePanel != null)
+            if (dialoguePanel != null)
+            {
                 dialoguePanel.SetActive(false);
+                UIManager.Instance.CloseUI(dialoguePanel);
+            }
             ClearOptions();
         }
         
