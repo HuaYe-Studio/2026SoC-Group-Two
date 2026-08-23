@@ -14,9 +14,7 @@ public class InventoryUIManager : MonoBehaviour
     public RectTransform rightPanel;
     public GameObject iconPrefab;
     public GameObject cellBgPrefab;
-    private InventorySlotItem SelectItem;
-    private Inventory SelectInventory;
-    private int SelectGridX, SelectGridY;
+
     [Header("格子参数")]
     public float cellSize = 60;
     public float spacing = 5;
@@ -28,7 +26,12 @@ public class InventoryUIManager : MonoBehaviour
     private Inventory dragSource;
     private InventorySlotItem dragItem;
     private int dragStartX, dragStartY;
+    private RectTransform dragIconTransform; 
 
+private InventorySlotItem selectItem;
+private Inventory selectSourceInv;
+private int selectGridX;
+private int selectGridY;
     void Start()
     {
         windowRoot.SetActive(false);
@@ -89,8 +92,8 @@ public class InventoryUIManager : MonoBehaviour
             GameObject iconObj = Instantiate(iconPrefab, panel);
             RectTransform rt = iconObj.GetComponent<RectTransform>();
 
-            float totalWidth = slot.currentWidth * cellSize + (slot.currentWidth - 1) * spacing;
-            float totalHeight = slot.currentHeight * cellSize + (slot.currentHeight - 1) * spacing;
+            float totalWidth = slot.CurrentWidth * cellSize + (slot.CurrentWidth - 1) * spacing;
+float totalHeight = slot.CurrentHeight * cellSize + (slot.CurrentHeight - 1) * spacing;
             rt.sizeDelta = new Vector2(totalWidth, totalHeight);
 
             float x = slot.anchorX * (cellSize + spacing);
@@ -118,63 +121,84 @@ public class InventoryUIManager : MonoBehaviour
     }
 
     void Update()
+{
+    if (!windowRoot.activeSelf) return;
+
+    Vector2 mousePos = Input.mousePosition;
+
+    if (Input.GetMouseButtonDown(0))
     {
-        if (!windowRoot.activeSelf) return;
+        TrySelectItem(leftPanel, currentTrash, mousePos);
+        if (selectItem == null)
+            TrySelectItem(rightPanel, externalPlayerBag, mousePos);
 
-        Vector2 mousePos = Input.mousePosition;
+        TryPickItem(leftPanel, currentTrash, mousePos);
+        if (dragItem == null)
+            TryPickItem(rightPanel, externalPlayerBag, mousePos);
+    }
 
-        if (Input.GetMouseButtonDown(0))
+    if (dragItem != null && dragIconTransform != null)
+    {
+        RectTransform parentCanvas = dragIconTransform.parent as RectTransform;
+        if (parentCanvas != null &&
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                parentCanvas, mousePos, null, out Vector2 localPoint))
         {
-            TrySelectItem(leftPanel, currentTrash, mousePos);
-            if (SelectItem == null)
-            {
-                TrySelectItem(rightPanel, externalPlayerBag, mousePos);
-            }
-            TryPickItem(leftPanel, currentTrash, mousePos);
-            if (dragItem == null)
-                TryPickItem(rightPanel, externalPlayerBag, mousePos);
+            dragIconTransform.localPosition = localPoint;
         }
-        if (Input.GetKeyDown(KeyCode.R) && SelectItem != null)
+    }
+
+    if (Input.GetMouseButtonUp(0) && dragItem != null)
+    {
+        bool dropped = false;
+
+        if (PosToGrid(leftPanel, mousePos, out int lx, out int ly))
         {
-        int curW = SelectItem.currentWidth;
-        int curH = SelectItem.currentHeight;
+            dropped = TryDropItem(currentTrash, lx, ly);
+        }
+
+        if (!dropped && PosToGrid(rightPanel, mousePos, out int rx, out int ry))
+        {
+            dropped = TryDropItem(externalPlayerBag, rx, ry);
+        }
+
+        if (!dropped)
+        {
+            dragSource.TryPlaceItem(dragItem, dragStartX, dragStartY);
+        }
+
+        DestroyDragVisual();
+        dragItem = null;
+        dragSource = null;
+        dragIconTransform = null;
+        RefreshAll();
+    }
+
+    if (Input.GetKeyDown(KeyCode.R) && selectItem != null)
+    {
+        int curW = selectItem.CurrentWidth;
+        int curH = selectItem.CurrentHeight;
         int nextW = curH;
         int nextH = curW;
 
-        bool canRotate = SelectInventory.CanPlaceAt(SelectItem.anchorX, SelectItem.anchorY, nextW, nextH);
-    
+        bool canRotate = selectSourceInv.CanPlaceAt(selectItem.anchorX, selectItem.anchorY, nextW, nextH);
+
         if (canRotate)
         {
-            SelectItem.ToggleRotate();
+            selectItem.ToggleRotate();
             RefreshAll();
         }
         else
         {
-            Debug.Log("此处无法旋转");
+            Debug.Log("物品当前位置无法旋转");
         }
     }
-        if (Input.GetMouseButtonUp(0) && dragItem != null)
-        {
-            bool placed = false;
-            if (PosToGrid(leftPanel, mousePos, out int lx, out int ly))
-            {
-                placed = TryDropItem(currentTrash, lx, ly);
-            }
-            if (!placed && PosToGrid(rightPanel, mousePos, out int rx, out int ry))
-            {
-                placed = TryDropItem(externalPlayerBag, rx, ry);
-            }
 
-            dragItem = null;
-            dragSource = null;
-            RefreshAll();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Close();
-        }
+    if (Input.GetKeyDown(KeyCode.Escape))
+    {
+        Close();
     }
+}
 
     void TryPickItem(RectTransform panel, Inventory inv, Vector2 mouse)
     {
@@ -188,10 +212,37 @@ public class InventoryUIManager : MonoBehaviour
             dragItem = slot;
             dragStartX = slot.anchorX;
             dragStartY = slot.anchorY;
+
+            dragSource.RemoveItem(dragItem);
+            CreateDragVisual(panel, slot);
         }
     }
 
-void TrySelectItem(RectTransform panel, Inventory inv, Vector2 mouse)
+    void CreateDragVisual(RectTransform parentPanel, InventorySlotItem slot)
+    {
+        GameObject visual = Instantiate(iconPrefab, parentPanel);
+        dragIconTransform = visual.GetComponent<RectTransform>();
+
+        float totalWidth = slot.CurrentWidth * cellSize + (slot.CurrentWidth - 1) * spacing;
+        float totalHeight = slot.CurrentHeight * cellSize + (slot.CurrentHeight - 1) * spacing;
+        dragIconTransform.sizeDelta = new Vector2(totalWidth, totalHeight);
+
+        Image img = visual.GetComponent<Image>();
+        if (img != null && slot.itemData != null)
+            img.sprite = slot.itemData.icon;
+
+        visual.transform.SetAsLastSibling();
+    }
+
+    void DestroyDragVisual()
+    {
+        if (dragIconTransform != null)
+        {
+            Destroy(dragIconTransform.gameObject);
+            dragIconTransform = null;
+        }
+    }
+    void TrySelectItem(RectTransform panel, Inventory inv, Vector2 mouse)
 {
     if (!PosToGrid(panel, mouse, out int x, out int y)) 
         return;
@@ -199,29 +250,23 @@ void TrySelectItem(RectTransform panel, Inventory inv, Vector2 mouse)
     InventorySlotItem slot = inv.GetItemAtGrid(x, y);
     if (slot != null)
     {
-        // 选中物品
-        SelectItem = slot;
-        SelectInventory = inv;
-        SelectGridX = x;
-        SelectGridY = y;
+        selectItem = slot;
+        selectSourceInv = inv;
+        selectGridX = x;
+        selectGridY = y;
     }
     else
     {
-        SelectItem = null;
-        SelectInventory = null;
+        selectItem = null;
+        selectSourceInv = null;
     }
 }
-    bool TryDropItem(Inventory targetInv, int x, int y)
-    {
-        if (targetInv == dragSource && x == dragStartX && y == dragStartY)
-            return false;
 
-        bool canPlace = targetInv.TryPlaceItem(dragItem.itemData, x, y);
-        if (canPlace)
-        {
-            dragSource.RemoveItem(dragItem);
-            return true;
-        }
+    bool TryDropItem(Inventory targetInv, int x, int y)
+{
+    if (targetInv == dragSource && x == dragStartX && y == dragStartY)
         return false;
-    }
+    bool canPlace = targetInv.TryPlaceItem(dragItem, x, y);
+    return canPlace;
+}
 }
