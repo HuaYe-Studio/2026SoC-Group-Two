@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UI;
 
 namespace Settings
 {
@@ -9,7 +10,11 @@ namespace Settings
         {
             if (Input.GetKeyDown(KeyCode.F1))
             {
-                settingPanel.SetActive(!settingPanel.activeSelf);
+                var panel = settingPanel.GetComponent<SettingUIPanels>();
+                if (settingPanel.activeSelf) 
+                    panel.CloseSettingPanel();
+                else 
+                    panel.OpenSettingPanel();
                 
                 Debug.Log("成功强行呼出设置界面");
             }

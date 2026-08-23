@@ -16,7 +16,7 @@ public class GameFlowManager : MonoBehaviour
     
     public bool isPlaying { get; private set; }
     private HashSet<string> pauseLocks = new HashSet<string>();
-    public bool isGameActive => isPlaying && pauseLocks.Count > 0;
+    public bool isGameActive => isPlaying && pauseLocks.Count == 0;
 
     private void Awake()
     {
