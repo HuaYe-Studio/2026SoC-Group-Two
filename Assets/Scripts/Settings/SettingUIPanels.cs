@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using Settings;
 using TMPro;
+using UnityEngine.Events;
 
 public class SettingUIPanels : MonoBehaviour
     {
@@ -24,6 +25,9 @@ public class SettingUIPanels : MonoBehaviour
         [Header("其他组件")]
         [SerializeField]private Button applyButton;
         [SerializeField]private Button closeButton;
+
+        [Header("事件")]
+        public UnityEvent OnCloseButtonClicked;
 
         //图像设置不支持预览，点击应用才会应用
         private bool tempIsFullscreen;
@@ -84,7 +88,8 @@ public class SettingUIPanels : MonoBehaviour
             SettingManager.Instance.SetSfxVolume(originalSfxVolume);
             
             gameObject.SetActive(false);
-        }
+            OnCloseButtonClicked?.Invoke();
+    }
 
         //之后UIManager需要做一个防止重复打开的拦截
         private void OnEnable()
@@ -96,6 +101,33 @@ public class SettingUIPanels : MonoBehaviour
             RefreshUI();
         }
 
+        private void OnDisable()
+        {
+            SettingManager.Instance.SetMasterVolume(originalMasterVolume);
+            SettingManager.Instance.SetMusicVolume(originalMusicVolume);
+            SettingManager.Instance.SetSfxVolume(originalSfxVolume);
+        }
+
+        public void OpenPanel()
+        {
+            if (gameObject.activeSelf) 
+                return;
+            GameFlowManager.Instance?.PauseGameplay("Settings");
+            RefreshUI();
+            gameObject.SetActive(true);
+        }
+        public void Close()
+        {
+            if (!gameObject.activeSelf) return;
+            GameFlowManager.Instance?.ResumeGameplay("Settings");
+            
+            SettingManager.Instance.SetMasterVolume(originalMasterVolume);
+            SettingManager.Instance.SetMusicVolume(originalMusicVolume);
+            SettingManager.Instance.SetSfxVolume(originalSfxVolume);
+            
+            gameObject.SetActive(false);
+        }
+        
         private void RefreshUI()
         {
             if (SettingManager.Instance == null)
