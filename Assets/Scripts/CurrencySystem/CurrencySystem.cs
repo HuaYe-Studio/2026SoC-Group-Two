@@ -7,7 +7,8 @@ using UnityEngine.Rendering.Universal;
 // 目前仅实现非常基础的功能
 public class CurrencySystem : MonoBehaviour
 {
-    private float currency_total;
+    [Header("总货币持有数")]
+    public float currency_total;
 
     #region 公共方法
     // 获取货币

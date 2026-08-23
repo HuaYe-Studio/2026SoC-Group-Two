@@ -60,14 +60,23 @@ public class Container_ItemManager : MonoBehaviour
 
     public void AddItem(ItemPivot itemPivot, Vector2 pivotPosition)
     {
-        if (itemPivot == null || itemPivots.Contains(itemPivot))
+        if (itemPivot == null)
         {
             return;
         }
 
+        if (itemPivot.containerOfItem != null && itemPivot.containerOfItem != gameObject)
+        {
+            Container_ItemManager oldManager = itemPivot.containerOfItem.GetComponent<Container_ItemManager>();
+            oldManager?.RemoveItem(itemPivot);
+        }
+
         itemPivot.containerOfItem = gameObject;
         itemPivot.pivotPositionInContainer = pivotPosition;
-        itemPivots.Add(itemPivot);
+        if (!itemPivots.Contains(itemPivot))
+        {
+            itemPivots.Add(itemPivot);
+        }
     }
 
     public void RemoveItem(ItemPivot itemPivot)
@@ -94,6 +103,19 @@ public class Container_ItemManager : MonoBehaviour
         {
             itemPivot.containerOfItem = null;
         }
+    }
+
+    public void ClearDisplayedItems()
+    {
+        foreach (ItemPivot itemPivot in itemPivots)
+        {
+            if (itemPivot != null)
+            {
+                itemPivot.gameObject.SetActive(false);
+            }
+        }
+
+        itemPivots.Clear();
     }
 
     #region 隐藏网格阵中物品
