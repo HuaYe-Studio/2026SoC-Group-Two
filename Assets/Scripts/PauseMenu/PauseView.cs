@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
-
+using UI;
 
 public class PauseView : MonoBehaviour
 {
@@ -40,11 +40,13 @@ public class PauseView : MonoBehaviour
     public void Show()
     {
         pausePanel.SetActive(true);
+        UIManager.Instance.OpenUI(pausePanel.gameObject);
     }
     //Òþ²ØÔÝÍ£²Ëµ¥
     public void Hide()
     {
         pausePanel.SetActive(false);
+        UIManager.Instance.CloseUI(pausePanel.gameObject);
     }
 
 }

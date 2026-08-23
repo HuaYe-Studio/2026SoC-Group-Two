@@ -89,7 +89,7 @@ public class PauseController : MonoBehaviour
     {
         //“˛≤ÿ‘›Õ£≤Àµ•£¨œ‘ æ…Ë÷√√Ê∞Â
         view.Hide();
-        settingPanel.SetActive(true);
+        settingPanel.GetComponent<SettingUIPanels>().OpenSettingPanel();
         isSettingPanelOpen = true;
     }
 
