@@ -32,7 +32,7 @@ namespace NPC
     }
     
     //实现示例,简陋的修改属性
-    [CreateAssetMenu(fileName = "ChangeStatusActions", menuName = "Dialogue/Actions/ChangeStatus")]
+    [CreateAssetMenu(menuName = "Dialogue/Actions/ChangeStatus")]
     public class ChangeStatusActionSO : DialogueActionSO
     {
         public StatusType targetStatus;
@@ -42,6 +42,15 @@ namespace NPC
         {
             //id暂且约定为system.action
             DialogueEvents.Raise("status.change",(targetStatus, amount));
+        }
+    }
+
+    [CreateAssetMenu(menuName = "Dialogue/Actions/OpenContainer")]
+    public class OpenContainerActionSO : DialogueActionSO
+    {
+        public override void Execute(DialogueContext context)
+        {
+            DialogueEvents.Raise("container.open");
         }
     }
 }

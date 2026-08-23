@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using NPC;
 
 public class ContainerKeyboradInput : MonoBehaviour
 {
@@ -16,7 +17,9 @@ public class ContainerKeyboradInput : MonoBehaviour
     void Start()
     {
         isContainerOpened = false;
-        container_Key = KeyManager.Instance.container_Call_key;
+        
+        DialogueEvents.OnRaised -= OnDialogueEvent;
+        DialogueEvents.OnRaised += OnDialogueEvent;
     }
 
     void Update()
@@ -27,7 +30,7 @@ public class ContainerKeyboradInput : MonoBehaviour
     #region 容器按键输入控制
     void Open_Close_Container()
     {
-        if (Keyboard.current?[container_Key].wasPressedThisFrame ?? false)
+        if (Keyboard.current?[KeyManager.Instance.container_Call_key].wasPressedThisFrame ?? false)
         {
             isContainerOpened = !isContainerOpened;
 
@@ -51,5 +54,18 @@ public class ContainerKeyboradInput : MonoBehaviour
         containerPanel.gameObject.SetActive(false);
         GetComponent<Container_ItemManager>().HideItemInContainer();
     }
+    #endregion
+
+    #region 对话系统响应事件
+
+    private void OnDialogueEvent(string id, object data)
+    {
+        if (id != "container.open") return;
+
+        isContainerOpened = true;
+        containerPanel.gameObject.SetActive(true);
+        GetComponent<Container_ItemManager>().LoadItemInContainer();
+    }
+
     #endregion
 }
