@@ -141,7 +141,8 @@ public class InventoryUIManager : MonoBehaviour
         int nextW = curH;
         int nextH = curW;
 
-        bool canRotate = SelectInventory.CanPlaceAt(SelectItem.anchorX, SelectItem.anchorY, nextW, nextH);
+        bool canRotate = SelectInventory != null && SelectInventory.CanPlaceAt(
+            SelectItem.anchorX, SelectItem.anchorY, nextW, nextH, SelectItem);
     
         if (canRotate)
         {
@@ -216,12 +217,20 @@ void TrySelectItem(RectTransform panel, Inventory inv, Vector2 mouse)
         if (targetInv == dragSource && x == dragStartX && y == dragStartY)
             return false;
 
-        bool canPlace = targetInv.TryPlaceItem(dragItem.itemData, x, y);
+        if (targetInv == null || dragItem == null)
+            return false;
+
+        if (dragSource != null)
+            dragSource.RemoveItem(dragItem);
+
+        bool canPlace = targetInv.TryPlaceItem(dragItem, x, y);
         if (canPlace)
         {
-            dragSource.RemoveItem(dragItem);
             return true;
         }
+
+        if (dragSource != null)
+            dragSource.TryPlaceItem(dragItem, dragStartX, dragStartY);
         return false;
     }
 }

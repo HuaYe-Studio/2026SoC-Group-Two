@@ -32,6 +32,12 @@ public class ItemMeshDetection : MonoBehaviour
     List<GameObject> readyMeshes = new List<GameObject>();  // 记录准备放入的网格
     ContainerCreator containerCreator; // 容器网格父级
     bool isDragging = false;
+    Container_ItemManager previousContainerManager;
+    Vector2 previousPivotPosition;
+    Vector3 previousLocalEulerAngles;
+    List<Vector2> previousItemMeshPositions;
+    List<Vector2> previousMeshLocalPositions;
+    GameObject[] previousUsingContainerMeshes;
     #endregion
 
     public Transform AnchorTransform => anchorItemMesh != null ? anchorItemMesh.transform : null;
@@ -89,7 +95,7 @@ public class ItemMeshDetection : MonoBehaviour
             Debug.LogError("ItemMeshDetection: 未找到任何 ItemMesh。", gameObject);
         }
 
-        ItemPivot itemPivot = GetComponent<ItemPivot>();
+        ItemPivot itemPivot = GetComponentInParent<ItemPivot>();
         if (itemPivot != null)
         {
             itemPivot.itemMeshPositions.Clear();
@@ -115,10 +121,20 @@ public class ItemMeshDetection : MonoBehaviour
         isDragging = true;
         RefreshItemMeshData();
         ItemPivot itemPivot = GetComponentInParent<ItemPivot>();
+        previousContainerManager = null;
+        previousUsingContainerMeshes = usingContainerMeshes != null ? (GameObject[])usingContainerMeshes.Clone() : null;
+        previousItemMeshPositions = itemPivot != null ? new List<Vector2>(itemPivot.itemMeshPositions) : null;
+        previousMeshLocalPositions = new List<Vector2>();
+        foreach (ItemMesh itemMesh in itemMeshes)
+        {
+            previousMeshLocalPositions.Add(itemMesh.itemMeshPos);
+        }
+        previousLocalEulerAngles = parentItem.transform.localEulerAngles;
         if (itemPivot != null && itemPivot.containerOfItem != null)
         {
-            Container_ItemManager itemManager = itemPivot.containerOfItem.GetComponent<Container_ItemManager>();
-            itemManager?.RemoveItem(itemPivot);
+            previousContainerManager = itemPivot.containerOfItem.GetComponent<Container_ItemManager>();
+            previousPivotPosition = itemPivot.pivotPositionInContainer;
+            previousContainerManager?.RemoveItem(itemPivot);
         }
         if (usingContainerMeshes != null)
         {
@@ -157,6 +173,11 @@ public class ItemMeshDetection : MonoBehaviour
         if (readyMeshes.Count > 0 && containerCreator != null) ChangeContainerMeshColor(containerCreator.originMeshColor, readyMeshes.ToArray());
         readyMeshes.Clear();
 
+        if (!placed)
+        {
+            RestorePreviousContainer();
+        }
+
         return placed;
     }
     #endregion
@@ -164,6 +185,12 @@ public class ItemMeshDetection : MonoBehaviour
     #region 检测是否靠近容器网格
     public void DetectContainerMesh()
     {
+        containerMeshes = GameObject.FindGameObjectsWithTag("containermesh");
+        if (containerMeshes.Length == 0)
+        {
+            containerMeshes = GameObject.FindGameObjectsWithTag("backpackmesh");
+        }
+
         if (readyMeshes.Count > 0 && containerCreator != null)
         {
             ChangeContainerMeshColor(containerCreator.originMeshColor, readyMeshes.ToArray());
@@ -185,10 +212,14 @@ public class ItemMeshDetection : MonoBehaviour
             if (within)
             {
                 ContainerMesh containerMeshScript = containerMesh.GetComponent<ContainerMesh>();
+                if (containerMeshScript == null || containerMeshScript.containerCreator == null)
+                {
+                    continue;
+                }
 
                 if (!containerMeshScript.isMeshUsed)
                 {
-                    containerCreator = containerMesh.transform.parent.gameObject.GetComponent<ContainerCreator>();
+                    containerCreator = containerMeshScript.containerCreator;
                     GameObject[] thisPackMeshes = containerCreator.containerMeshes.ToArray();
                     if (isSpaceEnough(containerMeshScript, thisPackMeshes, out List<GameObject> matchedMeshes))
                     {
@@ -295,6 +326,63 @@ public class ItemMeshDetection : MonoBehaviour
         itemManager.AddItem(itemPivot, selectedContainerMesh.meshPos);
 
         Debug.Log($"PutInContainer: 放入容器，锚点由 {anchorItemMesh.name} 对齐到 {containerMesh.name}");
+    }
+
+    void RestorePreviousContainer()
+    {
+        ItemPivot itemPivot = GetComponentInParent<ItemPivot>();
+        if (itemPivot == null || previousContainerManager == null)
+        {
+            return;
+        }
+
+        parentItem.transform.localEulerAngles = previousLocalEulerAngles;
+        if (previousItemMeshPositions != null)
+        {
+            itemPivot.itemMeshPositions.Clear();
+            itemPivot.itemMeshPositions.AddRange(previousItemMeshPositions);
+        }
+        for (int i = 0; i < itemMeshes.Length && i < previousMeshLocalPositions.Count; i++)
+        {
+            itemMeshes[i].itemMeshPos = previousMeshLocalPositions[i];
+        }
+
+        itemPivot.transform.position = FindPreviousMeshPosition();
+        previousContainerManager.AddItem(itemPivot, previousPivotPosition);
+        if (previousUsingContainerMeshes != null)
+        {
+            foreach (GameObject mesh in previousUsingContainerMeshes)
+            {
+                ContainerMesh containerMeshScript = mesh != null ? mesh.GetComponent<ContainerMesh>() : null;
+                if (containerMeshScript != null)
+                {
+                    containerMeshScript.isMeshUsed = true;
+                }
+            }
+        }
+    }
+
+    Vector3 FindPreviousMeshPosition()
+    {
+        if (previousContainerManager == null)
+        {
+            return parentItem.transform.position;
+        }
+
+        ContainerCreator creator = previousContainerManager.GetComponent<ContainerCreator>();
+        if (creator != null)
+        {
+            foreach (GameObject mesh in creator.containerMeshes)
+            {
+                ContainerMesh containerMeshScript = mesh != null ? mesh.GetComponent<ContainerMesh>() : null;
+                if (containerMeshScript != null && containerMeshScript.meshPos == previousPivotPosition)
+                {
+                    return containerMeshScript.transform.position;
+                }
+            }
+        }
+
+        return parentItem.transform.position;
     }
     #endregion
 

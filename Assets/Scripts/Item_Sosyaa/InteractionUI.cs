@@ -10,8 +10,12 @@ public class InteractionUI : MonoBehaviour
     #region 使用物品按钮事件
     public void OnUseBtnClick()
     {
-        if (itemInteractingWith.GetComponent<ItemPivot>().itemData.isUsable == false) return;
-        itemInteractingWith.GetComponent<ItemPivot>().itemData.itemUsedEvent.Invoke();
+        ItemPivot itemPivot = itemInteractingWith != null ? itemInteractingWith.GetComponentInParent<ItemPivot>() : null;
+        if (itemPivot == null || itemPivot.itemData == null || !itemPivot.itemData.isUsable) return;
+        
+        itemPivot.itemData.itemUsedEvent.Invoke();
+        
+        itemPivot.GetComponentInChildren<ItemFunction>().DropItem();
         gameObject.SetActive(false);
     }
     #endregion
@@ -19,7 +23,7 @@ public class InteractionUI : MonoBehaviour
     #region 丢弃物品按钮事件
     public void OnDropBtnClick()
     {
-        itemInteractingWith.GetComponent<ItemFunction>().DropItem();
+        itemInteractingWith?.GetComponentInParent<ItemFunction>()?.DropItem();
         gameObject.SetActive(false);
     }
     #endregion
@@ -35,5 +39,10 @@ public class InteractionUI : MonoBehaviour
     void Awake()
     {
         gameObject.SetActive(false);
+    }
+
+    void Update()
+    {
+        transform.SetAsLastSibling();
     }
 }

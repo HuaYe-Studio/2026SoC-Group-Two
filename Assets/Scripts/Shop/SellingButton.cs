@@ -53,8 +53,14 @@ public class SellingButton : MonoBehaviour
     public void ConfirmSelling()
     {
         // 交易货币结算
-        foreach (ItemPivot itemPivot in sell_ContainerItemManager.itemPivots)
+        ItemPivot[] sellingItems = sell_ContainerItemManager.itemPivots.ToArray();
+        foreach (ItemPivot itemPivot in sellingItems)
         {
+            if (itemPivot == null || itemPivot.itemData == null)
+            {
+                continue;
+            }
+
             player_CurrencySystem.AddCurrency(itemPivot.itemData.itemPrice);
             sell_ContainerItemManager.RemoveItem(itemPivot);
             Destroy(itemPivot.gameObject);

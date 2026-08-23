@@ -23,7 +23,7 @@ public class TemporaryPanel : MonoBehaviour
 
         foreach (ItemPivot itemPivot in itemPivots)
         {
-            if (itemPivot.containerOfItem != null)
+            if (itemPivot.containerOfItem == null)
             {
                 player_CurrencySystem.AddCurrency(itemPivot.itemData.itemPrice);
                 Destroy(itemPivot.gameObject);

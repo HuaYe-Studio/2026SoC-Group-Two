@@ -18,8 +18,21 @@ public class ItemFunction : MonoBehaviour , IPointerClickHandler
 
     void Awake()
     {
-        itemPivot = transform.parent.GetComponent<ItemPivot>();
+        itemPivot = GetComponentInParent<ItemPivot>();
         interactionUI = GameObject.Find("InteractionUI");
+
+        if (interactionUI == null)
+        {
+            InteractionUI[] interactionUIs = Resources.FindObjectsOfTypeAll<InteractionUI>();
+            foreach (InteractionUI candidate in interactionUIs)
+            {
+                if (candidate.gameObject.scene.IsValid())
+                {
+                    interactionUI = candidate.gameObject;
+                    break;
+                }
+            }
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -37,6 +50,10 @@ public class ItemFunction : MonoBehaviour , IPointerClickHandler
             {
                 OnDoubleClick();
                 lastClickTime = 0f;
+            }
+            else
+            {
+                lastClickTime = Time.time;
             }
         }
     }
@@ -56,21 +73,34 @@ public class ItemFunction : MonoBehaviour , IPointerClickHandler
     #region 鼠标右键点击事件 - 召唤出物品互动UI框
     void OnMouseRightClick()
     {
+        if (interactionUI == null)
+        {
+            return;
+        }
+
+        InteractionUI interaction = interactionUI.GetComponent<InteractionUI>();
+        if (interaction == null) return;
+
         interactionUI.GetComponent<RectTransform>().position = Input.mousePosition;
+        interaction.itemInteractingWith = gameObject;
         interactionUI.SetActive(true);
-        interactionUI.GetComponent<InteractionUI>().itemInteractingWith = gameObject;
     }
     #endregion
 
     #region 移除物品
     public void DropItem()
     {
+        if (itemPivot == null)
+        {
+            return;
+        }
+
         if (itemPivot.containerOfItem != null)
         {
-            itemPivot.containerOfItem.GetComponent<Container_ItemManager>().RemoveItem(itemPivot);
+            itemPivot.containerOfItem.GetComponent<Container_ItemManager>()?.RemoveItem(itemPivot);
 
         }
-        Destroy(gameObject.transform.parent.gameObject);
+        Destroy(itemPivot.gameObject);
     }
     #endregion
 }

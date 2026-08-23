@@ -13,11 +13,12 @@ public class EndTradeBtn : MonoBehaviour
     {
         sellZoneContainerIManager = GameObject.Find("SellContainer").GetComponent<Container_ItemManager>();
         canvasGroup = GetComponent<CanvasGroup>();
+        GetComponent<Button>().interactable = true;
     }
 
     void Update()
     {
-        if (sellZoneContainerIManager.itemPivots != null)
+        if (sellZoneContainerIManager.itemPivots.Count > 0)
         {
             GetComponent<Button>().interactable = false;
             canvasGroup.alpha = 0.5f;

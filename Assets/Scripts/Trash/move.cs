@@ -87,6 +87,11 @@ public class Inventory
     }
     public bool CanPlaceAt(int anchorX, int anchorY, int occupyW, int occupyH)
     {
+        return CanPlaceAt(anchorX, anchorY, occupyW, occupyH, null);
+    }
+
+    public bool CanPlaceAt(int anchorX, int anchorY, int occupyW, int occupyH, InventorySlotItem ignoredSlot)
+    {
         for(int dx=0;dx<occupyW;dx++)
         {
             for(int dy=0;dy<occupyH;dy++)
@@ -97,7 +102,7 @@ public class Inventory
                 {
                     return false;
                 }
-                if(GetItemAtGrid(gx, gy) != null)
+                if(GetItemAtGrid(gx, gy) != null && GetItemAtGrid(gx, gy) != ignoredSlot)
                 {
                     return false;
                 }
