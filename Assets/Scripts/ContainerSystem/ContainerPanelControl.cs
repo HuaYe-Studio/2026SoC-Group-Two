@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using NPC;
+using UI;
 
 public class ContainerKeyboradInput : MonoBehaviour
 {
@@ -37,11 +38,13 @@ public class ContainerKeyboradInput : MonoBehaviour
             if (isContainerOpened)
             {
                 containerPanel.gameObject.SetActive(true);
+                UIManager.Instance.OpenUI(containerPanel.gameObject);
                 GetComponent<Container_ItemManager>().LoadItemInContainer();
             }
             else
             {
                 containerPanel.gameObject.SetActive(false);
+                UIManager.Instance.CloseUI(containerPanel.gameObject); 
             }
         }
     }
@@ -52,6 +55,7 @@ public class ContainerKeyboradInput : MonoBehaviour
     {
         isContainerOpened = false;
         containerPanel.gameObject.SetActive(false);
+        UIManager.Instance.CloseUI(containerPanel.gameObject); 
         GetComponent<Container_ItemManager>().HideItemInContainer();
     }
     #endregion

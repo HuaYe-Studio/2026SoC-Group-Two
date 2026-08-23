@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UI;
 
 public class InventoryUIManager : MonoBehaviour
 {
@@ -46,12 +47,14 @@ private int selectGridY;
     {
         currentTrash = trash;
         windowRoot.SetActive(true);
+        UIManager.Instance.OpenUI(windowRoot.gameObject); 
         RefreshAll();
     }
 
     public void Close()
     {
         windowRoot.SetActive(false);
+        UIManager.Instance.CloseUI(windowRoot.gameObject);
         dragItem = null;
         dragSource = null;
     }
