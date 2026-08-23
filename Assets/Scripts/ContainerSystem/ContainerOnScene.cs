@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UI;
 
 
 // 此脚本用于管理场景容器中的物品
@@ -58,7 +59,7 @@ public class ContainerOnScene : MonoBehaviour
                 }
 
                 Debug.Log("容器开启");
-                containerPanel.transform.parent.gameObject.SetActive(true);
+                UIManager.Instance.OpenUI(containerPanel.transform.parent.gameObject);
 
                 containerItemManager.LoadItemInContainer();
             }
@@ -74,7 +75,7 @@ public class ContainerOnScene : MonoBehaviour
                 
                 containerItemManager.HideItemInContainer();
                 
-                containerPanel.transform.parent.gameObject.SetActive(false);
+                UIManager.Instance.CloseUI(containerPanel.transform.parent.gameObject);
             }
         }
 
@@ -117,7 +118,7 @@ public class ContainerOnScene : MonoBehaviour
                     containerItemManager.HideItemInContainer();
                 }
                 
-                containerPanel.transform.parent.gameObject.SetActive(false);
+                UIManager.Instance.CloseUI(containerPanel.transform.parent.gameObject);
                 isContainerOpened = false;
             }
         }

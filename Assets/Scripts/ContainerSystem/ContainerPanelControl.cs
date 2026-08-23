@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using NPC;
 using UI;
-
+// 注：此脚本处于弃用状态，总的容器面板管理器是 ContainerUIManager.cs
 public class ContainerKeyboradInput : MonoBehaviour
 {
     [Header("容器面板画布")]
