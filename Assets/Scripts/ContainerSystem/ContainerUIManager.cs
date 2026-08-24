@@ -7,6 +7,8 @@ using UI;
 // 此管理器用于管理不同容器的UI面板
 public class ContainerUIManager : MonoBehaviour
 {
+    [Header("总容器面板画布")]
+    public GameObject containerCanvas;
     [Header("背包容器面板")]
     public GameObject backpackContainerPanel;
     [Header("垃圾桶容器面板")]
@@ -41,27 +43,29 @@ public class ContainerUIManager : MonoBehaviour
     void Start()
     {
         // 各个面板初始默认不激活
-        UIManager.Instance.CloseUI(backpackContainerPanel);
+        backpackContainerPanel.SetActive(false);
         foreach (GameObject trashContainerPanel in trashContainerPanels)
         {
-            UIManager.Instance.CloseUI(trashContainerPanel);
+            trashContainerPanel.SetActive(false);
         }
-        UIManager.Instance.CloseUI(shopContainerPanel);
+        shopContainerPanel.SetActive(false);
     }
 
     void Update()
     {
+        #region 背包容器呼唤逻辑
         isBackpackContainerOpened = backpackContainerPanel.activeSelf;
         if (Keyboard.current?[callBackpackContainerPanelKey].wasPressedThisFrame ?? false)
         {
             isBackpackContainerOpened = !isBackpackContainerOpened;
             if (isBackpackContainerOpened)
             {
-                UIManager.Instance.OpenUI(backpackContainerPanel);
+                UIManager.Instance.OpenUI(containerCanvas);
+                backpackContainerPanel.SetActive(true);
             }
             else
             {
-                UIManager.Instance.CloseUI(backpackContainerPanel);
+                backpackContainerPanel.SetActive(false);
             }
 
             if (isBackpackContainerOpened)
@@ -79,23 +83,51 @@ public class ContainerUIManager : MonoBehaviour
                 }
             }
         }
+        #endregion
+
+        #region 容器面板控制逻辑
+        if (!ExistOpeningContainer())
+        {
+            UIManager.Instance.CloseUI(containerCanvas);
+        } 
+        #endregion
     }
 
+    #region 关闭背包按钮被点击事件
     public void OnCloseBackpackContainerPanelClick()
     {
         isBackpackContainerOpened = false;
-        UIManager.Instance.CloseUI(backpackContainerPanel);
+        backpackContainerPanel.SetActive(false);
         foreach (Container_ItemManager containerItemManager in backpackContainerPanel.GetComponentsInChildren<Container_ItemManager>())
         {
             containerItemManager.HideItemInContainer();
         }
     }
+    #endregion
 
+    #region 对话事件：打开商店面板
     private void OnDialogueEvent(string id, object data)
     {
         if (id == "container.open")
         {
-            UIManager.Instance.OpenUI(backpackContainerPanel);
+            UIManager.Instance.OpenUI(containerCanvas);
+            shopContainerPanel.SetActive(true);
         }
     }
+    #endregion
+
+    #region 判断是否有打开的容器面板
+    bool ExistOpeningContainer()
+    {
+        if (backpackContainerPanel.activeSelf||
+        shopContainerPanel.activeSelf) return true;
+        
+        foreach (GameObject trashPanel in trashContainerPanels)
+        {
+            if (trashPanel.activeSelf) return true;
+        }
+
+        return false;
+    }
+    #endregion
 }

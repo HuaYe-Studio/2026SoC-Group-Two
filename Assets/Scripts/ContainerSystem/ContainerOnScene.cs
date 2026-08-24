@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 using UI;
 
 
-// 此脚本用于管理场景容器中的物品
+// 此脚本用于 场景容器同玩家交互判定 缓存场景容器中的物品 并 负责在场景编辑中生成缓存的物品
 public class ContainerOnScene : MonoBehaviour
 {
     [Header("容器中的物品")]
@@ -20,9 +20,11 @@ public class ContainerOnScene : MonoBehaviour
     [Header("单个添加物品")]
     public GameObject itemPrefab;
     public GameObject containerMesh;
+    [Header("容器画布")]
+    public GameObject contaienrCanvas;
 
     private bool isContainerOpened = false;
-    public bool enterTrigger = false;
+    private bool enterTrigger = false;
 
     void Awake()
     {
@@ -59,7 +61,8 @@ public class ContainerOnScene : MonoBehaviour
                 }
 
                 Debug.Log("容器开启");
-                UIManager.Instance.OpenUI(containerPanel.transform.parent.gameObject);
+                UIManager.Instance.OpenUI(contaienrCanvas);
+                containerPanel.transform.parent.gameObject.SetActive(true);
 
                 containerItemManager.LoadItemInContainer();
             }
@@ -75,7 +78,7 @@ public class ContainerOnScene : MonoBehaviour
                 
                 containerItemManager.HideItemInContainer();
                 
-                UIManager.Instance.CloseUI(containerPanel.transform.parent.gameObject);
+                containerPanel.transform.parent.gameObject.SetActive(false);
             }
         }
 
@@ -118,7 +121,7 @@ public class ContainerOnScene : MonoBehaviour
                     containerItemManager.HideItemInContainer();
                 }
                 
-                UIManager.Instance.CloseUI(containerPanel.transform.parent.gameObject);
+                containerPanel.transform.parent.gameObject.SetActive(false);
                 isContainerOpened = false;
             }
         }
