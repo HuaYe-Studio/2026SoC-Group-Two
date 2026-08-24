@@ -65,7 +65,6 @@ public class PauseController : MonoBehaviour
         SetPause(true);
         view.Show();
         //暂停游戏时间
-        //Time.timeScale = 0;
         GameFlowManager.Instance.PauseGameplay("PauseMenu");
     }
 
@@ -74,7 +73,6 @@ public class PauseController : MonoBehaviour
         SetPause(false);
         view.Hide();
         //恢复游戏时间
-        //Time.timeScale = 1;
         GameFlowManager.Instance.ResumeGameplay("PauseMenu");
     }
 
@@ -91,7 +89,7 @@ public class PauseController : MonoBehaviour
     {
         //隐藏暂停菜单，显示设置面板
         view.Hide();
-        settingPanel.SetActive(true);
+        settingPanel.GetComponent<SettingUIPanels>().OpenSettingPanel();
         isSettingPanelOpen = true;
     }
 
