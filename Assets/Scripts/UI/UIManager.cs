@@ -9,7 +9,9 @@ namespace UI
         public static UIManager Instance { get; private set; }
         
         private GameObject currentOpenUI;
-        public bool IsAnyUIOpen => currentOpenUI != null;
+        [SerializeField] private GameObject PausePanel;
+        
+        public bool IsAnyUIOpen => currentOpenUI != null || PausePanel.activeSelf;
         
         private void Awake()
         {
