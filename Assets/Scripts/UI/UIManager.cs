@@ -25,6 +25,8 @@ namespace UI
         {
             if (currentOpenUI == UI)
                 return;
+            if(UI.activeSelf)
+                return;
             
             CloseCurrent();
             UI.SetActive(true);
@@ -37,6 +39,7 @@ namespace UI
         {
             if (currentOpenUI == null)
                 return;
+            
             UI.SetActive(false);
             if(GameFlowManager.Instance != null)
                 GameFlowManager.Instance.ResumeGameplay($"{UI.name}");
