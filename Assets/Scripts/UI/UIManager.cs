@@ -9,7 +9,9 @@ namespace UI
         public static UIManager Instance { get; private set; }
         
         private GameObject currentOpenUI;
-        public bool IsAnyUIOpen => currentOpenUI != null;
+        [SerializeField] private GameObject PausePanel;
+        
+        public bool IsAnyUIOpen => currentOpenUI != null || PausePanel.activeSelf;
         
         private void Awake()
         {
@@ -25,6 +27,8 @@ namespace UI
         {
             if (currentOpenUI == UI)
                 return;
+            if(UI.activeSelf)
+                return;
             
             CloseCurrent();
             UI.SetActive(true);
@@ -37,6 +41,7 @@ namespace UI
         {
             if (currentOpenUI == null)
                 return;
+            
             UI.SetActive(false);
             if(GameFlowManager.Instance != null)
                 GameFlowManager.Instance.ResumeGameplay($"{UI.name}");
