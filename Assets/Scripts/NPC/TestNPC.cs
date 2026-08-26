@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UI;
 
 namespace NPC
 {
@@ -52,10 +53,8 @@ namespace NPC
 
         private void UpdatePromptText()
         {
-            
-            bool shouldShow = isInRange && !(DialogueManager.Instance?.IsDialogueActive ?? false);
-            if(DialogueUI.Instance !=null)
-                DialogueUI.Instance.ShowPromptText(shouldShow);
+            bool shouldShow = isInRange && !(DialogueManager.Instance?.IsDialogueActive ?? false)&& !(UIManager.Instance?.IsAnyUIOpen?? false);
+            DialogueUI.Instance?.ShowPromptText(shouldShow);
         }
         
         private void OnDrawGizmosSelected()

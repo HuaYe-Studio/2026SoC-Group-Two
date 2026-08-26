@@ -165,7 +165,7 @@ public class SettingUIPanels : MonoBehaviour
             List<string> frameRateOptions = new List<string>();
             foreach (var frameRates in SettingManager.Instance.AvailableFrameRates)
             {
-                frameRateOptions.Add(frameRates == -1? "不限制" : $"{frameRates} FPS");
+                frameRateOptions.Add(frameRates == -1? "不限" : $"{frameRates} FPS");
             }
             frameRateDropdown.AddOptions(frameRateOptions);
             frameRateDropdown.SetValueWithoutNotify(tempFrameRateIndex);
