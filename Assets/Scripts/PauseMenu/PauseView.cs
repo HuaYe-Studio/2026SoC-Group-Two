@@ -7,13 +7,13 @@ using UI;
 
 public class PauseView : MonoBehaviour
 {
-    [Header("ÔÝÍ£Ãæ°å")]
+    [Header("ï¿½ï¿½Í£ï¿½ï¿½ï¿½")]
     public GameObject pausePanel;
-    [Header("°´Å¥")]
+    [Header("ï¿½ï¿½Å¥")]
     public Button continueButton;
     public Button settingButton;
     public Button quitButton;
-    [Header("ÊÂ¼þ")]
+    [Header("ï¿½Â¼ï¿½")]
     public UnityEvent OnContinue;
     public UnityEvent OnSetting;
     public UnityEvent OnQuit;
@@ -36,13 +36,13 @@ public class PauseView : MonoBehaviour
         );
 
     }
-    //ÏÔÊ¾ÔÝÍ£²Ëµ¥
+    //ï¿½ï¿½Ê¾ï¿½ï¿½Í£ï¿½Ëµï¿½
     public void Show()
     {
         pausePanel.SetActive(true);
         UIManager.Instance.OpenUI(pausePanel.gameObject);
     }
-    //Òþ²ØÔÝÍ£²Ëµ¥
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ëµï¿½
     public void Hide()
     {
         pausePanel.SetActive(false);
