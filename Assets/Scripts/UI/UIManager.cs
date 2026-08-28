@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System;
-using UnityEngine.InputSystem;
 
 namespace UI
 {
@@ -9,9 +7,8 @@ namespace UI
         public static UIManager Instance { get; private set; }
         
         private GameObject currentOpenUI;
-        [SerializeField] private GameObject PausePanel;
         
-        public bool IsAnyUIOpen => currentOpenUI != null || PausePanel.activeSelf;
+        public bool IsAnyUIOpen => currentOpenUI != null ||(PauseController.Instance?.isPausePanelOpen?? true);
         
         private void Awake()
         {
@@ -22,7 +19,6 @@ namespace UI
             }
             Instance = this;
         }
-
         public void OpenUI(GameObject UI)
         {
             if (currentOpenUI == UI)
@@ -39,9 +35,6 @@ namespace UI
 
         public void CloseUI(GameObject UI)
         {
-            if (currentOpenUI == null)
-                return;
-            
             UI.SetActive(false);
             if(GameFlowManager.Instance != null)
                 GameFlowManager.Instance.ResumeGameplay($"{UI.name}");
@@ -51,7 +44,8 @@ namespace UI
         
         public void CloseCurrent()           
         {
-            if (currentOpenUI == null) return;
+            if (currentOpenUI == null) 
+                return;
             currentOpenUI.SetActive(false);
             if(GameFlowManager.Instance != null)
                 GameFlowManager.Instance.ResumeGameplay($"{currentOpenUI.name}");

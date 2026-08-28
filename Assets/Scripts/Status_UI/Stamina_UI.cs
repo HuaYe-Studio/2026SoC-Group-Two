@@ -27,6 +27,10 @@ public class Stamina_UI : MonoBehaviour
     {
         if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
             return;
+        
+        if (maxStaminaValue <= 0)                                                                                                                  
+            maxStaminaValue = StatusManager.Instance.GetStatusModule(StatusType.Stamina).MaxValue;
+        
         currentStaminaValue = StatusManager.Instance.GetStatusModule(StatusType.Stamina).CurrentValue;
         ChangeIconStyle(currentStaminaValue);
     }
@@ -34,19 +38,19 @@ public class Stamina_UI : MonoBehaviour
     #region 改变体力图标样式
     void ChangeIconStyle(float currentStaminaValue)
     {
-        if (currentStaminaValue > 2 / 3 * maxStaminaValue)
+        if (currentStaminaValue > 2f / 3f * maxStaminaValue)
         {
             stamina_icon_good.gameObject.SetActive(true);
             stamina_icon_bad.gameObject.SetActive(false);
             stamina_icon_worse.gameObject.SetActive(false);
         }
-        else if (currentStaminaValue >= 1 / 3 * maxStaminaValue && currentStaminaValue <= 2 / 3 * maxStaminaValue)
+        else if (currentStaminaValue >= 1f / 3f * maxStaminaValue && currentStaminaValue <= 2f / 3f * maxStaminaValue)
         {
             stamina_icon_good.gameObject.SetActive(false);
             stamina_icon_bad.gameObject.SetActive(false);
             stamina_icon_worse.gameObject.SetActive(true);
         }
-        else if (currentStaminaValue < 1 / 3 * maxStaminaValue)
+        else if (currentStaminaValue < 1f / 3f * maxStaminaValue)
         {
             stamina_icon_good.gameObject.SetActive(false);
             stamina_icon_bad.gameObject.SetActive(true);

@@ -7,18 +7,20 @@ using WorldTime;
 public class TimeUI : MonoBehaviour
 {
     private TMP_Text tMP_Text;
-    private TimeManager timeManager;
 
     void Awake()
     {
-        tMP_Text = GetComponent<TextMeshPro>();
-        timeManager = GameObject.Find("TimeManager").GetComponent<TimeManager>();
+        tMP_Text = GetComponentInChildren<TextMeshProUGUI>();
     }
 
+    void Start()
+    {
+        if(TimeManager.Instance ==  null)
+            Debug.LogWarning("TimeManager not found");
+    }
     void Update()
     {
-        tMP_Text.text = timeManager.CurrentTime.Hour.ToString() + ":"
-        + timeManager.CurrentTime.Minute.ToString() + ":"
-        + timeManager.CurrentTime.Second.ToString();
+        tMP_Text.text = TimeManager.Instance.CurrentTime.Hour.ToString("00") + ":"
+        + TimeManager.Instance.CurrentTime.Minute.ToString("00") ;
     }
 }

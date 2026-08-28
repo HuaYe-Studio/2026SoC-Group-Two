@@ -149,5 +149,13 @@ namespace NPC
             }
             return true;
         }
+        
+        public void ResetDialogueState()                                                                                                                                                 
+        {                                                                                                                                                                                
+            IsDialogueActive = false;                                                                                                                                                    
+            currentNode = null;                                                                                                                                                          
+            currentContext = null;                                                                                                                                                       
+            availableOptions = null;                                                                                                                                                     
+        }
     }
 }

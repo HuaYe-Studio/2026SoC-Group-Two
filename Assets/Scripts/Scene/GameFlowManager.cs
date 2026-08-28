@@ -6,6 +6,8 @@ using Scene;
 using Status;
 using Environment;
 using WorldSeed;
+using UnityEngine.SceneManagement;
+using NPC;
 
 public class GameFlowManager : MonoBehaviour
 {
@@ -27,14 +29,25 @@ public class GameFlowManager : MonoBehaviour
         }
         Instance = this;
     }
-    
     private void Update()
     {
-        //if (Input.GetKeyDown(KeyCode.Escape))
-        //{
-        //    QuitGame();
-        //}
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            OnGameStart();
+        }
     }
+    
+    private void OnEnable()                                                                                                                                                          
+        {                                                                                                                                                                                
+            SceneManager.sceneLoaded += HandleSceneLoadedForLock;                                                                                                                        
+        }                                                                                                                                                                                
+                                                                                                                                                                                   
+        private void OnDisable()                                                                                                                                                         
+        {                                                                                                                                                                                
+            SceneManager.sceneLoaded -= HandleSceneLoadedForLock;                                                                                                                        
+        } 
+    
+        
     private void OnDestroy()
     {
         if (TimeManager.Instance != null)
@@ -70,6 +83,10 @@ public class GameFlowManager : MonoBehaviour
     {
         if (TimeManager.Instance == null|| StatusManager.Instance == null || EnvironmentManager.Instance == null || WorldSeedManager.Instance == null)
         {
+            Debug.LogError($"初始化失败：TimeManager={TimeManager.Instance != null}，" +                                                                                             
+                           $"StatusManager={StatusManager.Instance != null}，" +                                                                                                     
+                           $"EnvironmentManager={EnvironmentManager.Instance != null}，" +                                                                                           
+                           $"WorldSeedManager={WorldSeedManager.Instance != null}"); 
             this.enabled = false;
             return;
         }
@@ -149,5 +166,24 @@ public class GameFlowManager : MonoBehaviour
             Time.timeScale = 1f;// 恢复游戏时间
         }
     }
+    
+    private void HandleSceneLoadedForLock(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode)                                                                                                           
+        {                                                                                                                                                                                
+            if (mode == LoadSceneMode.Single)                                                                                                                                            
+            {                                                                                                                                                                            
+                ClearPauseLocks();                                                                                                                                                       
+            }                                                                                                                                                                            
+        }
+
+        private void ClearPauseLocks()
+        {
+            if (pauseLocks.Count == 0)                                                                                                                                                   
+                return;                                                                                                                                                                  
+                                                                                                                                                                                   
+            pauseLocks.Clear();                                                                                                                                                          
+            Time.timeScale = 1f;
+            
+            DialogueManager.Instance?.ResetDialogueState();
+        }
 }
 

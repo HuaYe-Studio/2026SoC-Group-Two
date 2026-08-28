@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UI;
+using NPC;
 
 // 此管理器用于管理不同容器的UI面板
 public class ContainerUIManager : MonoBehaviour
@@ -54,7 +55,9 @@ public class ContainerUIManager : MonoBehaviour
     void Update()
     {
         #region 背包容器呼唤逻辑
-        isBackpackContainerOpened = backpackContainerPanel.activeSelf;
+        if (DialogueManager.Instance?.IsDialogueActive ?? false) 
+            return;
+        isBackpackContainerOpened = backpackContainerPanel.activeInHierarchy;
         if (Keyboard.current?[callBackpackContainerPanelKey].wasPressedThisFrame ?? false)
         {
             isBackpackContainerOpened = !isBackpackContainerOpened;
@@ -119,12 +122,12 @@ public class ContainerUIManager : MonoBehaviour
     #region 判断是否有打开的容器面板
     bool ExistOpeningContainer()
     {
-        if (backpackContainerPanel.activeSelf||
-        shopContainerPanel.activeSelf) return true;
+        if (backpackContainerPanel.activeInHierarchy||
+        shopContainerPanel.activeInHierarchy) return true;
         
         foreach (GameObject trashPanel in trashContainerPanels)
         {
-            if (trashPanel.activeSelf) return true;
+            if (trashPanel.activeInHierarchy) return true;
         }
 
         return false;

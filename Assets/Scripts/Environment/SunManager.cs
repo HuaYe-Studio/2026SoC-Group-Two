@@ -12,6 +12,19 @@ namespace Environment
         [SerializeField]private float maxLightIntensity = 1.2f;
         [SerializeField]private float minLightIntensity = 0.1f;
         [SerializeField]private float sunYRotation = 30f;
+                                                                                                                                                                                         
+        [Header("一天光强曲线")]                                                                                                                                 
+        [SerializeField] private AnimationCurve dayLightCurve = new AnimationCurve(
+            new Keyframe(0.00f, 0.05f), 
+            new Keyframe(0.21f, 0.05f),  
+            new Keyframe(0.25f, 0.25f), 
+            new Keyframe(0.50f, 1.00f),  
+            new Keyframe(0.67f, 0.55f),  
+            new Keyframe(0.71f, 0.30f),  
+            new Keyframe(0.75f, 0.12f),  
+            new Keyframe(0.79f, 0.06f),  
+            new Keyframe(1.00f, 0.05f)  
+        );
         
         private const float MinuteOfHour = 60f;
         private const float SecondOfHour = 60f;
@@ -34,14 +47,14 @@ namespace Environment
             if (GameFlowManager.Instance == null || GameFlowManager.Instance.isPlaying == false ||
                 TimeManager.Instance == null || sunLight == null)
                 return;
-
+            
             float dayProgress = CalculateDayProgress();
 
             float sunXAngle = CalculateSunXAngle(dayProgress);
             sunLight.transform.rotation = Quaternion.Euler(sunXAngle,sunYRotation, 0f);
 
-            float intensityFactor = CalculateDayLightFactor(dayProgress);
-            float baseIntensity = Mathf.Lerp(minLightIntensity, maxLightIntensity, intensityFactor);
+            float lightFactor = dayLightCurve.Evaluate(dayProgress);
+            float baseIntensity = Mathf.Lerp(minLightIntensity, maxLightIntensity, lightFactor);
 
             float weatherLightMultiplier = (EnvironmentManager.Instance != null)
                 ? EnvironmentManager.Instance.CurrentSunIntensityMultiplier
@@ -62,17 +75,6 @@ namespace Environment
         {
             float sunXAngle = Mathf.Lerp(AngleXInMidNight, AngleXInNewMidNight, dayProgress);
             return sunXAngle;
-        }
-        
-                
-        //原名CalculateSunLightIntensity有歧义，实际上该方法是约束计算Lerp的光照强度，故改名
-        private float CalculateDayLightFactor(float dayProgress)
-        {
-            //早上六点强度为0，十八点为0.以此变换正弦波
-            //之后如果要有季节乘以季节系数可能吧
-            float sineValue = Mathf.Sin((dayProgress - 0.25f) * Mathf.PI * 2f);
-            
-            return Mathf.Clamp01(sineValue);
         }
     }
 }

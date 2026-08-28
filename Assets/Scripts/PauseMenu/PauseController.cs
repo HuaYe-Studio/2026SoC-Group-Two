@@ -7,20 +7,30 @@ using UnityEngine.InputSystem;
 public class PauseController : MonoBehaviour
 {
     public bool IsPaused { get; private set; } = false;
+    public static PauseController Instance { get; private set; }
+    
     public void SetPause(bool value)
     {
         IsPaused = value;
     }
-    //ToDo: ÔÚUIManagerÉèÖÃºÃºó¶Ô´Ë´¦½øÐÐÐÞ¸Ä
+    //ToDo: ï¿½ï¿½UIManagerï¿½ï¿½ï¿½ÃºÃºï¿½Ô´Ë´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½
     [SerializeField] private GameObject settingPanel;
     private bool isSettingPanelOpen = false;
+    public bool isPausePanelOpen = false;
 
     public PauseView view;
 
 
     private void Awake()
     {
-        //viewÊÂ¼þ¼àÌý
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        
+        //viewï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
         view.OnContinue.AddListener(
             ResumeGame
         );
@@ -30,15 +40,20 @@ public class PauseController : MonoBehaviour
         view.OnQuit.AddListener(
             QuitGame
         );
-        //ÉèÖÃÔÝÍ£Ãæ°å³õÊ¼×´Ì¬ÎªÒþ²Ø
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Ê¼×´Ì¬Îªï¿½ï¿½ï¿½ï¿½
         view.Hide();
-        //¶ÔÓÚ¹Ø±ÕÉèÖÃÃæ°åÊÂ¼þµÄ¼àÌý
-        settingPanel
-        .GetComponent<SettingUIPanels>()
-        .OnCloseButtonClicked
-        .AddListener(ReturnPauseMenu);
+        //ï¿½ï¿½ï¿½Ú¹Ø±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+        
     }
 
+    private void Start()
+    {
+        settingPanel = FindAnyObjectByType<SettingUIPanels>(FindObjectsInactive.Include)?.gameObject; 
+        settingPanel
+            ?.GetComponent<SettingUIPanels>()
+            .OnCloseButtonClicked
+            .AddListener(ReturnPauseMenu);
+    }
 
     private void Update()
     {
@@ -57,14 +72,13 @@ public class PauseController : MonoBehaviour
         }
 
     }
-
-
-
+    
     public void PauseGame()
     {
         SetPause(true);
         view.Show();
-        //ÔÝÍ£ÓÎÏ·Ê±¼ä
+        isPausePanelOpen = true;
+        //ï¿½ï¿½Í£ï¿½ï¿½Ï·Ê±ï¿½ï¿½
         GameFlowManager.Instance.PauseGameplay("PauseMenu");
     }
 
@@ -72,7 +86,8 @@ public class PauseController : MonoBehaviour
     {
         SetPause(false);
         view.Hide();
-        //»Ö¸´ÓÎÏ·Ê±¼ä
+        isPausePanelOpen = false;
+        //ï¿½Ö¸ï¿½ï¿½ï¿½Ï·Ê±ï¿½ï¿½
         GameFlowManager.Instance.ResumeGameplay("PauseMenu");
     }
 
@@ -87,17 +102,19 @@ public class PauseController : MonoBehaviour
 
     private void OpenSetting()
     {
-        //Òþ²ØÔÝÍ£²Ëµ¥£¬ÏÔÊ¾ÉèÖÃÃæ°å
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         view.Hide();
+        isSettingPanelOpen = false;
         settingPanel.GetComponent<SettingUIPanels>().OpenSettingPanel();
         isSettingPanelOpen = true;
     }
 
     private void ReturnPauseMenu()
     {
-        //¼àÌýµ½ÉèÖÃÃæ°å¹Ø±ÕÊÂ¼þºó£¬ÏÔÊ¾ÔÝÍ£²Ëµ¥
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Í£ï¿½Ëµï¿½
         if (IsPaused)
             view.Show();
+        isPausePanelOpen = true;
         isSettingPanelOpen = false;
     }
 }

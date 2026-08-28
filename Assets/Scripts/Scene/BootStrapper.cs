@@ -2,7 +2,7 @@
 
 namespace Scene
 {
-    public class Bootstrapper:MonoBehaviour
+    public class BootStrapper:MonoBehaviour
     {
         private async void Start()
         {
