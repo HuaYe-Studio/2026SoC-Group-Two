@@ -28,6 +28,9 @@ public class Health_UI : MonoBehaviour
         if (GameFlowManager.Instance == null || !GameFlowManager.Instance.isPlaying)
             return;
 
+        if (maxHealthValue <= 0)                                                                                                                     
+            maxHealthValue = StatusManager.Instance.GetStatusModule(StatusType.Healthy).MaxValue;
+        
         // 获取玩家健康状态
         currentHealthValue = StatusManager.Instance.GetStatusModule(StatusType.Healthy).CurrentValue;
 
@@ -47,7 +50,7 @@ public class Health_UI : MonoBehaviour
     #region 设置图标颜色渐变
     void ChangeIconColor(float currentHealthValue)
     {
-        health_icon_normal.color = new Color(currentHealthValue / maxHealthValue * 255f , 0f , 0f);
+        health_icon_normal.color = new Color(currentHealthValue / maxHealthValue , 0f , 0f);
     }
     #endregion
 }

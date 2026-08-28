@@ -12,6 +12,9 @@ namespace Environment
         
         [Header("场景光源")]
         [SerializeField]private Light sunLight;
+        private float currentMultiplier = 1f;                                                                                                   
+        private float targetMultiplier = 1f;                                                                                                       
+        [SerializeField] private float multiplierLerpSpeed = 0.05f; 
         
         [Header("SO配置")]
         [SerializeField]private List<SkySettingsSO>  skySettings = new List<SkySettingsSO>();
@@ -28,8 +31,7 @@ namespace Environment
         private float timeBigJumpThreshold = 120f;
         private float timeJumpThreshold = 10f;
 
-        public float CurrentSunIntensityMultiplier =>
-            currentSetting != null ? currentSetting.lightIntensityMultiplier : 1.0f;
+        public float CurrentSunIntensityMultiplier => currentMultiplier;
         
         private void Awake()
         {
@@ -51,6 +53,11 @@ namespace Environment
             }
             
             lastCheckedTime = TimeManager.Instance.CurrentTime;
+        }
+
+        void Update()
+        {
+            currentMultiplier = Mathf.Lerp(currentMultiplier, targetMultiplier, multiplierLerpSpeed);                                                                                    
         }
 
         private void OnDestroy()
@@ -145,6 +152,7 @@ namespace Environment
         private void RefreshEnvironment(bool isInstant)
         {
             var targetWeatherState = (currentTimePeriod, currentWeatherType);
+            
             if (!skySettingsMap.TryGetValue(targetWeatherState, out SkySettingsSO targetSetting))
             {
                 Debug.LogWarning($"({currentTimePeriod}, {currentWeatherType}) 没有配置 SkySettingsSO，请检查 skySettings 列表");
@@ -154,9 +162,12 @@ namespace Environment
             if (targetSetting == currentSetting)
                 return;
             
+            targetMultiplier = targetSetting.lightIntensityMultiplier;
+            
             if (isInstant)
             {
                 currentSetting = targetSetting;
+                targetMultiplier = targetSetting.lightIntensityMultiplier;
                 ChangeSkySettingsInstant(currentSetting);
             }
             else
@@ -169,64 +180,52 @@ namespace Environment
         {
             isTransitioning = true;
 
-            Color startSunLightColor = sunLight != null ? sunLight.color : Color.white;
-            Color startAmbientColor = RenderSettings.ambientLight;
+            Material transitionMat = Material.Instantiate(RenderSettings.skybox);                                                                                                        
+            RenderSettings.skybox = transitionMat;                                                                                                                                       
+                                                                                                                                                                                   
+            Material targetMat = targetSetting.skyMaterial;
             
-            //静态转程序化
-            Color startSkyTint = Color.gray;
-            Color startGroundColor = Color.gray;
-
-            if (RenderSettings.skybox != null && RenderSettings.skybox.HasProperty("_SkyTint"))
-            {
-                startSkyTint = RenderSettings.skybox.GetColor("_SkyTint");
-                startGroundColor = RenderSettings.skybox.GetColor("_GroundColor");
-            }
-            
-            float elapsedTime = 0f;
-            bool isSkyboxChanged = false;
-
-            while (elapsedTime < transitionDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = elapsedTime / transitionDuration;
+            Color startTint = transitionMat.HasProperty("_Tint") ? transitionMat.GetColor("_Tint") : Color.white;                                                                        
+            Color targetTint = targetMat.HasProperty("_Tint") ? targetMat.GetColor("_Tint") : Color.white;                                                                               
+            float startExposure = transitionMat.HasProperty("_Exposure") ? transitionMat.GetFloat("_Exposure") : 1f;                                                                     
+            float targetExposure = targetMat.HasProperty("_Exposure") ? targetMat.GetFloat("_Exposure") : 1f;                                                                            
+                                                                                                                                                                                   
+            Color startSunLightColor = sunLight != null ? sunLight.color : Color.white;                                                                                                  
+            Color startAmbientColor = RenderSettings.ambientLight;                                                                                                                       
+                                                                                                                                                                                   
+            float elapsedTime = 0f;                                                                                                                                                      
+            bool isTextureSwapped = false;                                                                                                                                               
+                                                                                                                                                                                   
+            while (elapsedTime < transitionDuration)                                                                                                                                     
+            {                                                                                                                                                                            
+                elapsedTime += Time.deltaTime;                                                                                                                                           
+                float t = elapsedTime / transitionDuration;                                                                                                                              
+                t = t * t * (3f - 2f * t); 
+                if (sunLight != null)                                                                                                                                                    
+                    sunLight.color = Color.Lerp(startSunLightColor, targetSetting.sunLightColor, t);                                                                                     
+                RenderSettings.ambientLight = Color.Lerp(startAmbientColor, targetSetting.ambientLightColor, t);                                                                         
                 
-                if(sunLight!=null)
-                    sunLight.color = Color.Lerp(startSunLightColor, targetSetting.sunLightColor, t);
-                RenderSettings.ambientLight = Color.Lerp(startAmbientColor, targetSetting.ambientLightColor, t);
-
-                if (targetSetting.skyMode == SkyMode.Procedural)
-                {
-                    if (!isSkyboxChanged && targetSetting.skyMaterial != null)
-                    {
-                        RenderSettings.skybox=targetSetting.skyMaterial;
-                        isSkyboxChanged = true;
-                    }
-
-                    if (RenderSettings.skybox != null)
-                    {
-                        RenderSettings.skybox.SetColor("_SkyTint",
-                            Color.Lerp(startSkyTint, targetSetting.proceduralSkyTint, t));
-                        RenderSettings.skybox.SetColor("_GroundColor",Color.Lerp(startGroundColor, targetSetting.proceduralGroundColor, t));
-                    }
-                }
-                else
-                {
-                    if (t >= 0.5f && !isSkyboxChanged && targetSetting.skyMaterial != null)
-                    {
-                        RenderSettings.skybox =  targetSetting.skyMaterial;
-                        DynamicGI.UpdateEnvironment();
-                        isSkyboxChanged = true;
-                    }
-                }
-
-                await Task.Yield();
-            }
-
-            RenderSettings.fog = targetSetting.enableFog;
-            RenderSettings.fogColor = targetSetting.fogColor;
-            RenderSettings.fogDensity = targetSetting.fogDensity;
-            
-            currentSetting = targetSetting;
+                transitionMat.SetColor("_Tint", Color.Lerp(startTint, targetTint, t));                                                                                                   
+                transitionMat.SetFloat("_Exposure", Mathf.Lerp(startExposure, targetExposure, t));                                                                                       
+                
+                if (t >= 0.5f && !isTextureSwapped)                                                                                                                                      
+                {                                                                                                                                                                        
+                    Texture targetTex = targetMat.GetTexture("_Tex");                                                                                                                    
+                    if (targetTex != null)                                                                                                                                               
+                        transitionMat.SetTexture("_Tex", targetTex);                                                                                                                     
+                    isTextureSwapped = true;                                                                                                                                             
+                }                                                                                                                                                                        
+                                                                                                                                                                                   
+                await Task.Yield();                                                                                                                                                      
+            }                                                                                                                                                                            
+                                                                                                                                                                                   
+            RenderSettings.skybox = targetMat;                                                                                                      
+            RenderSettings.fog = targetSetting.enableFog;                                                                                                                                
+            RenderSettings.fogColor = targetSetting.fogColor;                                                                                                                            
+            RenderSettings.fogDensity = targetSetting.fogDensity;                                                                                                                        
+                                                                                                                                                                                   
+            currentSetting = targetSetting; 
+            targetMultiplier = targetSetting.lightIntensityMultiplier;
             isTransitioning = false;
         }
         private void ChangeSkySettingsInstant(SkySettingsSO settings)

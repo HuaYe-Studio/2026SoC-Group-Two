@@ -78,7 +78,7 @@ namespace Scene
                 return;
             
             Debug.Log($"准备从{CurrentWorldScene}切换到{targetScene}");
-            SceneManager.LoadScene(targetScene.ToString());
+            SceneManager.LoadScene(GetSceneName(targetScene));
             CurrentWorldScene = targetScene;
         }
 
@@ -102,6 +102,15 @@ namespace Scene
         {
             string sceneName = GetSceneName(targetUIScene);
             Debug.Log($"准备叠加UI{sceneName}");
+            
+            for (int i = 0; i < SceneManager.sceneCount; i++)                                                                 
+            {                                                                                                                 
+                if (SceneManager.GetSceneAt(i).name == sceneName)                                                             
+                {                                                                                                             
+                    Debug.Log($"{sceneName} 已叠加，跳过");                                                                   
+                    return;                                                                                                   
+                }                                                                                                             
+            }
             
             AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
             while (!operation.isDone)

@@ -5,7 +5,8 @@ namespace Environment
     public enum SkyMode
     {
         HDR,
-        Procedural
+        Procedural,
+        Procedural1         //用于统一材质
     }
     
     public enum WeatherType

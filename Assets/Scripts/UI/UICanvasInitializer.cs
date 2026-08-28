@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UI;
 using System;
 
@@ -29,19 +30,13 @@ public class UICanvasInitializer : MonoBehaviour
         foreach (CanvasProperty canvasProperty in canvasProperties)
         {
             Canvas canvas = canvasProperty.UIobj.GetComponentInChildren<Canvas>();
-            if (canvas == null) Debug.LogError($"无法找到 {canvasProperty.UIobj.name} 的 Canvas 组件！");
+            if (canvas == null)
+            {
+                Debug.LogError($"无法找到 {canvasProperty.UIobj.name} 的 Canvas 组件！");
+                continue;
+            }
             canvas.sortingOrder = canvasProperty.sortOrder;
-            
-            if (canvasProperty.isActiveOnStart)
-            {
-                UIManager.Instance.OpenUI(canvasProperty.UIobj);
-                Debug.Log($"激活 {canvasProperty.UIobj.name}");
-            }
-            else
-            {
-                UIManager.Instance.CloseUI(canvasProperty.UIobj);
-                Debug.Log($"隐藏 {canvasProperty.UIobj.name}");
-            }
+            canvasProperty.UIobj.SetActive(canvasProperty.isActiveOnStart);
         }
     }
     #endregion

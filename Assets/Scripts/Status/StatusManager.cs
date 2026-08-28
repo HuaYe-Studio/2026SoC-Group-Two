@@ -46,6 +46,15 @@ namespace Status
             DialogueEvents.OnRaised += OnDialogueEvent;
         }
 
+        void Update()
+        {
+            if (UnityEngine.Input.GetKeyDown(KeyCode.F8))
+            {
+                foreach (var kv in statusMap)
+                    Debug.Log($"{kv.Key}: {kv.Value.CurrentValue}/{kv.Value.MaxValue}");
+            }
+        }
+        
         private void OnDestroy()
         {
             if (TimeManager.Instance != null)
