@@ -49,6 +49,9 @@ public class ContainerOnScene : MonoBehaviour
 
     void Start()
     {
+        // 随机生成物品
+        RandomlyCreateItems();
+
         foreach (GameObject item in itemInContainerOnScene)
         {
             item.SetActive(false);
@@ -99,7 +102,7 @@ public class ContainerOnScene : MonoBehaviour
     }
 
     #region 添加物品
-    [ContextMenu("生成物品")]
+    [ContextMenu("自定义生成物品")] 
     public void CreateItemInEditor()
     {
     #if UNITY_EDITOR
@@ -190,8 +193,7 @@ public class ContainerOnScene : MonoBehaviour
     #endregion
 
     #region 随机生成物品
-    [ContextMenu("随机生成物品")]
-    public void RandomlyCreateItems()
+    void RandomlyCreateItems()
     {
         if (randomItemNumber <= 0 || randomItemsList == null || randomItemsList.Count == 0)
         {
