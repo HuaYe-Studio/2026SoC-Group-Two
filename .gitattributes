@@ -2,10 +2,8 @@
 # Git LFS 配置 —— 大型二进制文件
 # 所有匹配项将通过 LFS 存储，避免仓库膨胀
 # ============================================
-
 # --- 自动将文本文件的行尾转换为 LF ---
 * text=auto
-
 # --- 模型 / 3D 资源 ---
 *.fbx filter=lfs diff=lfs merge=lfs -text
 *.obj filter=lfs diff=lfs merge=lfs -text
@@ -15,7 +13,6 @@
 *.max filter=lfs diff=lfs merge=lfs -text
 *.mb filter=lfs diff=lfs merge=lfs -text
 *.ma filter=lfs diff=lfs merge=lfs -text
-
 # --- 纹理 / 图片 ---
 *.psd filter=lfs diff=lfs merge=lfs -text
 *.psb filter=lfs diff=lfs merge=lfs -text
@@ -31,7 +28,6 @@
 *.iff filter=lfs diff=lfs merge=lfs -text
 *.pict filter=lfs diff=lfs merge=lfs -text
 *.dds filter=lfs diff=lfs merge=lfs -text
-
 # --- 音频 ---
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.mp3 filter=lfs diff=lfs merge=lfs -text
@@ -43,14 +39,12 @@
 *.mod filter=lfs diff=lfs merge=lfs -text
 *.it filter=lfs diff=lfs merge=lfs -text
 *.s3m filter=lfs diff=lfs merge=lfs -text
-
 # --- 视频 ---
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
 *.avi filter=lfs diff=lfs merge=lfs -text
 *.ogv filter=lfs diff=lfs merge=lfs -text
 *.webm filter=lfs diff=lfs merge=lfs -text
-
 # --- Unity 特殊资源 ---
 *.unity filter=lfs diff=lfs merge=lfs -text
 *.prefab filter=lfs diff=lfs merge=lfs -text
@@ -67,7 +61,6 @@
 *.brush filter=lfs diff=lfs merge=lfs -text
 *.fontsettings filter=lfs diff=lfs merge=lfs -text
 *.guiskin filter=lfs diff=lfs merge=lfs -text
-
 # --- 插件 / 编译好的二进制库 ---
 *.dll filter=lfs diff=lfs merge=lfs -text
 *.so filter=lfs diff=lfs merge=lfs -text
@@ -76,14 +69,12 @@
 *.bundle filter=lfs diff=lfs merge=lfs -text
 *.jar filter=lfs diff=lfs merge=lfs -text
 *.aar filter=lfs diff=lfs merge=lfs -text
-
 # --- 构建产物（备份/发布包）---
 *.apk filter=lfs diff=lfs merge=lfs -text
 *.aab filter=lfs diff=lfs merge=lfs -text
 *.unitypackage filter=lfs diff=lfs merge=lfs -text
 *.app filter=lfs diff=lfs merge=lfs -text
 *.ipa filter=lfs diff=lfs merge=lfs -text
-
 # ============================================
 # 文本文件 —— 保留在普通 Git 中（便于 diff/merge）
 # ============================================
