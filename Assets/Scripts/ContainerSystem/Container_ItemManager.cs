@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 public class Container_ItemManager : MonoBehaviour
@@ -10,6 +11,53 @@ public class Container_ItemManager : MonoBehaviour
     void Awake()
     {
         containerCreator = GetComponent<ContainerCreator>();
+    }
+
+    void Start()
+    {
+        if (GameSaveManager.Instance == null || GameSaveManager.Instance.CurrentGameSave() == null)
+        {
+            return;
+        }
+
+        // 从存档中加载并缓存物品
+        foreach (ContainerData containerData in GameSaveManager.Instance.CurrentGameSave().containersData)
+        {
+            if (containerData == null || string.IsNullOrEmpty(containerData.containerName))
+            {
+                continue;
+            }
+
+            if (containerData.containerName == gameObject.name)
+            {
+                itemPivots.Clear();
+                foreach (ContainerItemData itemData in containerData.itemPivotsInContainer)
+                {
+                    if (itemData == null)
+                    {
+                        continue;
+                    }
+
+                    GameObject itemObject = GameObject.Find(itemData.itemName);
+                    if (itemObject == null)
+                    {
+                        continue;
+                    }
+
+                    ItemPivot itemPivot = itemObject.GetComponent<ItemPivot>();
+                    if (itemPivot == null)
+                    {
+                        continue;
+                    }
+
+                    itemPivot.pivotPositionInContainer = itemData.pivotPositionInContainer;
+                    itemPivot.itemMeshPositions = new List<Vector2>(itemData.itemMeshPositions);
+                    itemPivot.gameObject.SetActive(itemData.isActive);
+                    itemPivots.Add(itemPivot);
+                }
+                break;
+            }
+        }
     }
 
     #region 加载网格阵中物品

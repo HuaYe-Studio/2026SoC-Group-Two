@@ -3,12 +3,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
+using Status;
 using UnityEngine;
+using WorldTime;
 
 public class GameSaveManager : MonoBehaviour
 {
     private string jsonFilePrefix = "awotr_save_";
     private string gameSaveFolder => Path.Combine(Application.persistentDataPath, "gamesave"); 
+    private GameSaveData currentGameSave; // 当前启用的存档
+
 
     #region 单例实现
     private static GameSaveManager _instance;
@@ -74,8 +79,76 @@ public class GameSaveManager : MonoBehaviour
 
     #region 公共方法
     // 保存游戏数据
-    public void SaveGame(GameSaveData newSaveData)
+    public async Task SaveGame(GameSaveData newSaveData)
     {
+        if (newSaveData == null)
+        {
+            Debug.LogError("保存失败：新存档对象为空。");
+            return;
+        }
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (StatusManager.Instance != null)
+        {
+            newSaveData.playerData = new PlayerData(
+                StatusManager.Instance.GetStatusModule(StatusType.Healthy).CurrentValue,
+                StatusManager.Instance.GetStatusModule(StatusType.Stamina).CurrentValue,
+                StatusManager.Instance.GetStatusModule(StatusType.Hungry).CurrentValue,
+                StatusManager.Instance.GetStatusModule(StatusType.Mental).CurrentValue,
+                player != null ? player.transform : null
+            );
+        }
+        else if (player != null)
+        {
+            newSaveData.playerData = new PlayerData(0f, 0f, 0f, 0f, player.transform);
+        }
+        else
+        {
+            newSaveData.playerData = new PlayerData();
+        }
+
+        if (TimeManager.Instance != null)
+        {
+            newSaveData.timeData = new TimeData(
+                TimeManager.Instance.CurrentTime.Day,
+                TimeManager.Instance.CurrentTime.Hour,
+                TimeManager.Instance.CurrentTime.Minute
+            );
+        }
+        else
+        {
+            newSaveData.timeData = new TimeData(0, 0, 0);
+        }
+
+        newSaveData.containersData.Clear();
+        GameObject[] containers = GameObject.FindGameObjectsWithTag("container");
+        foreach (GameObject container in containers)
+        {
+            if (container == null)
+            {
+                continue;
+            }
+
+            Container_ItemManager itemManager = container.GetComponent<Container_ItemManager>();
+            if (itemManager == null)
+            {
+                continue;
+            }
+
+            List<ContainerItemData> serializedItems = new List<ContainerItemData>();
+            foreach (ItemPivot itemPivot in itemManager.itemPivots)
+            {
+                if (itemPivot == null)
+                {
+                    continue;
+                }
+
+                serializedItems.Add(new ContainerItemData(itemPivot));
+            }
+
+            newSaveData.containersData.Add(new ContainerData(container.name, serializedItems));
+        }
+
         string json = JsonUtility.ToJson(newSaveData , true);
 
         File.WriteAllText(newSaveData.savePath , json);
@@ -97,7 +170,7 @@ public class GameSaveManager : MonoBehaviour
     }
 
     // 新建存档（游戏进度从0开始）
-    public void CreateNewGameSave()
+    public async void CreateNewGameSave()
     {
         // 当存档列表不为空：
         if (saveDatas.Count >= 1)
@@ -105,6 +178,7 @@ public class GameSaveManager : MonoBehaviour
             int newID = saveDatas[saveDatas.Count - 1].saveID + 1;
             GameSaveData newSaveData = new GameSaveData(newID , Path.Combine(gameSaveFolder, $"{jsonFilePrefix}{newID}.json"));
             saveDatas.Add(newSaveData);
+            Debug.Log($"成功新建游戏存档：{newSaveData.savePath}");
         }
         
         // 若没有存档（第一次进行游玩）：
@@ -113,11 +187,12 @@ public class GameSaveManager : MonoBehaviour
             int newID = 0;
             GameSaveData newSaveData = new GameSaveData(newID , Path.Combine(gameSaveFolder, $"{jsonFilePrefix}{newID}.json"));
             saveDatas.Add(newSaveData);
+            Debug.Log($"成功新建游戏存档：{newSaveData.savePath}");
         }
     }
 
     // 删除存档
-    public void DeleteGameSave(GameSaveData saveData_ToDelete)
+    public async void DeleteGameSave(GameSaveData saveData_ToDelete)
     {
         File.Delete(saveData_ToDelete.savePath);
         Debug.Log($"已删除存档文件 {saveData_ToDelete.savePath}");
@@ -125,4 +200,20 @@ public class GameSaveManager : MonoBehaviour
         Debug.Log("游戏存档移除成功！");
     }
     #endregion
+
+    // 获取当前启用的存档
+    public GameSaveData CurrentGameSave() => currentGameSave;
+
+    // 选择存档并开始游戏
+    public void StartGameSave(GameSaveData selectedGameSave)
+    {
+        currentGameSave = selectedGameSave;
+    }
+
+    // 退出游戏（退出到主菜单）————关闭存档
+    public async void CloseGameSave()
+    {
+        await SaveGame(currentGameSave);
+        currentGameSave = null;
+    }
 }
